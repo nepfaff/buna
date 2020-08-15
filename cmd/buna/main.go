@@ -23,8 +23,12 @@ func main() {
 
 	bunaDB, err := buna.OpenSQLiteDB(ctx, logger, *bunaDBFilePath)
 	if err != nil {
-		logger.Fatal("buna: failed to open SQLite buna database")
+		logger.Fatal("buna: failed to open SQLite buna database", zap.Error(err))
 	}
 	defer bunaDB.Close()
 	logger.Info("buna: connected to SQLite buna database")
+
+	if err := buna.Run(ctx, bunaDB); err != nil {
+		logger.Fatal("buna: failed to run buna", zap.Error(err))
+	}
 }
