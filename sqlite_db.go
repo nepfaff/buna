@@ -106,6 +106,8 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 					CHECK (water_grams > 0),
 				coffee_grams INTEGER NOT NULL
 					CHECK (coffee_grams > 0),
+				v60_filter_type TEXT NULL
+					CHECK (v60_filter_type IN ("nan", "eu", "jp")),
 				rating INTEGER NULL CHECK (rating > 0 AND rating <= 10),
 				recommended_grind_setting_adjustment TEXT NULL
 					CHECK (recommended_grind_setting_adjustment IN ("lower", "higher")),
