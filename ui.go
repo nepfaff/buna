@@ -62,9 +62,17 @@ func Run(ctx context.Context, db DB) error {
 	for {
 		selection = getSelection()
 
-		fmt.Println(selection)
+		// Check for Quit option
+		if selection.category == control && selection.index == 0 {
+			break
+		}
+
+		if err := runSelection(selection); err != nil {
+			return fmt.Errorf("buna: ui: failed to run the selection: %w", err)
+		}
 	}
 
+	fmt.Println("Bye, keep enjoying your coffee!")
 	return nil
 }
 
@@ -133,6 +141,40 @@ func getSelection() selection {
 			index:    idx,
 		}
 	}
+}
+
+func runSelection(selection selection) error {
+	switch selection.category {
+	case create:
+		switch selection.index {
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		}
+	case retrieve:
+		switch selection.index {
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		}
+	case control:
+		switch selection.index {
+		case 0:
+			// Special case
+			// Already handled in Run()
+		case 1:
+			displayOptions()
+		}
+	default:
+		return errors.New("buna: ui: invalid category")
+	}
+	return nil
 }
 
 func getLongestCategoryLength() int {
