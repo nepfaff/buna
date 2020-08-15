@@ -48,11 +48,112 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 				region TEXT NULL,
 				variety TEXT NULL,
 				method TEXT NULL,
-				decaf BOOLEAN NULL CHECK (decaf IN (0,1)),
+				decaf BOOLEAN NULL
+					CHECK (decaf IN (0,1)),
 				UNIQUE(name, roaster)
 			)
 		`); err != nil {
 			return fmt.Errorf("buna: sqlite_db: failed to create coffees table: %w", err)
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+			CREATE TABLE IF NOT EXISTS purchases (
+				id INTEGER NOT NULL PRIMARY KEY,
+				coffee_id INTEGER NOT NULL,
+				bought_date TEXT NOT NULL,
+				roast_date TEXT NOT NULL,
+				FOREIGN KEY (coffee_id)
+					REFERENCES coffees (id)
+						ON DELETE RESTRICT
+			)
+		`); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to create purchases table: %w", err)
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+			CREATE TABLE IF NOT EXISTS brewing_methods (
+				id INTEGER NOT NULL PRIMARY KEY,
+				method TEXT NOT NULL,
+				UNIQUE(method)
+			)
+		`); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to create brewing_methods table: %w", err)
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+			CREATE TABLE IF NOT EXISTS grinders (
+				id INTEGER NOT NULL PRIMARY KEY,
+				name TEXT NOT NULL,
+				company TEXT NULL
+			)
+		`); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to create grinders table: %w", err)
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+			CREATE TABLE IF NOT EXISTS brewings (
+				id INTEGER NOT NULL PRIMARY KEY,
+				coffee_id INTEGER NOT NULL,
+				method_id INTEGER NOT NULL,
+				date TEXT NOT NULL,
+				roast_date TEXT NULL,
+				grinder_id INTEGER NOT NULL,
+				grind_setting INTEGER NOT NULL
+					CHECK (grind_setting >= 0),
+				total_brewing_time_sec INTEGER NOT NULL
+					CHECK (total_brewing_time_sec > 0),
+				water_grams INTEGER NOT NULL
+					CHECK (water_grams > 0),
+				coffee_grams INTEGER NOT NULL
+					CHECK (coffee_grams > 0),
+				rating INTEGER NULL CHECK (rating > 0 AND rating <= 10),
+				recommended_grind_setting_adjustment TEXT NULL
+					CHECK (recommended_grind_setting_adjustment IN ("lower", "higher")),
+				recommended_coffee_weight_adjustment_grams INTEGER NULL,
+				notes TEXT NULL,
+				FOREIGN KEY (coffee_id)
+					REFERENCES coffees (id)
+						ON DELETE RESTRICT,
+				FOREIGN KEY (method_id)
+					REFERENCES brewing_methods (id)
+						ON DELETE RESTRICT,
+				FOREIGN KEY (grinder_id)
+					REFERENCES grinders (id)
+						ON DELETE RESTRICT
+			)
+		`); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to create brewings table: %w", err)
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+			CREATE TABLE IF NOT EXISTS cuppings (
+				id INTEGER NOT NULL PRIMARY KEY,
+				date TEXT NOT NULL,
+				duration_min INTEGER NOT NULL
+					CHECK (duration_min > 0),
+				notes TEXT NOT NULL
+			)
+		`); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to create cuppings table: %w", err)
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+			CREATE TABLE IF NOT EXISTS cupped_coffees (
+				cupping_id INTEGER NOT NULL,
+				coffee_id INTEGER NOT NULL,
+				rank INTEGER NOT NULL
+					CHECK (rank > 0),
+				notes TEXT NOT NULL,
+				PRIMARY KEY (cupping_id, coffee_id),
+				FOREIGN KEY (cupping_id)
+					REFERENCES cuppings (id)
+						ON DELETE RESTRICT,
+				FOREIGN KEY (coffee_id)
+					REFERENCES coffees (id)
+						ON DELETE RESTRICT
+			)
+		`); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to create cupped_coffees table: %w", err)
 		}
 
 		return nil
