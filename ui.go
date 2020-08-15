@@ -177,6 +177,46 @@ func runSelection(selection selection) error {
 	return nil
 }
 
+// Returns a 'true' boolean if quit
+func validateStrInput(quitStr string, isOptional bool) (string, bool) {
+	var input string
+	fmt.Scanln(&input)
+
+	if input == quitStr {
+		return "", true
+	}
+
+	if !isOptional && input == "" {
+		fmt.Print("A value is required. Please try again: ")
+		return validateStrInput(quitStr, isOptional)
+	}
+
+	return input, false
+}
+
+// Second return boolean is 'true' if quit
+// Optional booleans default to 'false'
+func validateBoolInput(quitStr string, isOptional bool) (bool, bool) {
+	var input string
+	fmt.Scanln(&input)
+
+	if input == quitStr {
+		return false, true
+	}
+
+	if isOptional && input == "" {
+		return false, false
+	}
+
+	inputBool, err := strconv.ParseBool(input)
+	if err != nil {
+		fmt.Print("Invalid value. Please try again: ")
+		return validateBoolInput(quitStr, isOptional)
+	}
+
+	return inputBool, false
+}
+
 func getLongestCategoryLength() int {
 	var longest int
 	for _, cat := range options {
