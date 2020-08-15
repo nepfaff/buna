@@ -1,6 +1,7 @@
 package buna
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -67,7 +68,7 @@ func Run(ctx context.Context, db DB) error {
 			break
 		}
 
-		if err := runSelection(selection); err != nil {
+		if err := runSelection(ctx, selection, db); err != nil {
 			return fmt.Errorf("buna: ui: failed to run the selection: %w", err)
 		}
 	}
@@ -143,7 +144,7 @@ func getSelection() selection {
 	}
 }
 
-func runSelection(selection selection) error {
+func runSelection(ctx context.Context, selection selection, db DB) error {
 	switch selection.category {
 	case create:
 		switch selection.index {
@@ -151,6 +152,7 @@ func runSelection(selection selection) error {
 		case 1:
 		case 2:
 		case 3:
+			addCoffee(ctx, db)
 		case 4:
 		case 5:
 		}
@@ -179,8 +181,9 @@ func runSelection(selection selection) error {
 
 // Returns a 'true' boolean if quit
 func validateStrInput(quitStr string, isOptional bool) (string, bool) {
-	var input string
-	fmt.Scanln(&input)
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	input := scanner.Text()
 
 	if input == quitStr {
 		return "", true
@@ -197,8 +200,9 @@ func validateStrInput(quitStr string, isOptional bool) (string, bool) {
 // Second return boolean is 'true' if quit
 // Optional booleans default to 'false'
 func validateBoolInput(quitStr string, isOptional bool) (bool, bool) {
-	var input string
-	fmt.Scanln(&input)
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	input := scanner.Text()
 
 	if input == quitStr {
 		return false, true
