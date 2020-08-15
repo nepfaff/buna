@@ -1,7 +1,6 @@
 package buna
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -151,6 +150,9 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 		case 0:
 		case 1:
 		case 2:
+			if err := addCoffeePurchase(ctx, db); err != nil {
+				return fmt.Errorf("buna: ui: failed to create new coffee purchase: %w", err)
+			}
 		case 3:
 			if err := addCoffee(ctx, db); err != nil {
 				return fmt.Errorf("buna: ui: failed to create new coffee: %w", err)
@@ -179,48 +181,6 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 		return errors.New("buna: ui: invalid category")
 	}
 	return nil
-}
-
-// Returns a 'true' boolean if quit
-func validateStrInput(quitStr string, isOptional bool) (string, bool) {
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	input := scanner.Text()
-
-	if input == quitStr {
-		return "", true
-	}
-
-	if !isOptional && input == "" {
-		fmt.Print("A value is required. Please try again: ")
-		return validateStrInput(quitStr, isOptional)
-	}
-
-	return input, false
-}
-
-// Second return boolean is 'true' if quit
-// Optional booleans default to 'false'
-func validateBoolInput(quitStr string, isOptional bool) (bool, bool) {
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	input := scanner.Text()
-
-	if input == quitStr {
-		return false, true
-	}
-
-	if isOptional && input == "" {
-		return false, false
-	}
-
-	inputBool, err := strconv.ParseBool(input)
-	if err != nil {
-		fmt.Print("Invalid value. Please try again: ")
-		return validateBoolInput(quitStr, isOptional)
-	}
-
-	return inputBool, false
 }
 
 func getLongestCategoryLength() int {
