@@ -1,4 +1,4 @@
-module buna
+module github.com/nicholas-p1/buna
 
 go 1.13
 
