@@ -2,11 +2,19 @@ package buna
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/jedib0t/go-pretty/table"
 )
+
+type selection struct {
+	category category
+	index    int
+}
 
 type category int
 
@@ -14,34 +22,49 @@ const (
 	create category = iota
 	retrieve
 	// statistics
+	control
 )
 
-var categoryRefs = map[category]string{
-	create:   "A",
-	retrieve: "B",
-}
-
-var options = map[category]map[int]string{
-	create: map[int]string{
-		1: "New brewing",
-		2: "New cupping",
-		3: "New coffee purchase",
-		4: "New coffee",
-		5: "New brewing method",
-		6: "New grinder",
-	},
-	retrieve: map[int]string{
-		1: "Retrive brewing",
-		2: "Retrieve cupping",
-		3: "Retrieve coffee purchase",
-		4: "Retrieve coffee",
-		5: "Retrieve brewing method",
-		6: "Retrieve grinder",
-	},
-}
+var (
+	categoryRefs = map[category]string{
+		create:   "A",
+		retrieve: "B",
+		control:  "E",
+	}
+	options = map[category]map[int]string{
+		create: map[int]string{
+			0: "New brewing",
+			1: "New cupping",
+			2: "New coffee purchase",
+			3: "New coffee",
+			4: "New brewing method",
+			5: "New grinder",
+		},
+		retrieve: map[int]string{
+			0: "Retrive brewing",
+			1: "Retrieve cupping",
+			2: "Retrieve coffee purchase",
+			3: "Retrieve coffee",
+			4: "Retrieve brewing method",
+			5: "Retrieve grinder",
+		},
+		control: map[int]string{
+			0: "Quit",
+			1: "Display options",
+		},
+	}
+)
 
 func Run(ctx context.Context, db DB) error {
 	displayOptions()
+
+	var selection selection
+	for {
+		selection = getSelection()
+
+		fmt.Println(selection)
+	}
+
 	return nil
 }
 
@@ -71,6 +94,47 @@ func displayOptions() {
 	t.Render()
 }
 
+func getSelection() selection {
+	retry := func() {
+		fmt.Println("Invalid option. The following options are available:")
+		displayOptions()
+	}
+
+	for {
+		fmt.Print("Enter option: ")
+		var input string
+		fmt.Scanln(&input)
+		input = strings.ToUpper(input)
+
+		if len(input) != 2 {
+			retry()
+			continue
+		}
+
+		cat, err := getCategoryByString(input[:1])
+		if err != nil {
+			retry()
+			continue
+		}
+
+		idx, err := strconv.Atoi(input[1:])
+		if err != nil {
+			retry()
+			continue
+		}
+
+		if _, ok := options[cat][idx]; !ok {
+			retry()
+			continue
+		}
+
+		return selection{
+			category: cat,
+			index:    idx,
+		}
+	}
+}
+
 func getLongestCategoryLength() int {
 	var longest int
 	for _, cat := range options {
@@ -81,4 +145,13 @@ func getLongestCategoryLength() int {
 	}
 
 	return longest
+}
+
+func getCategoryByString(str string) (category, error) {
+	for cat, val := range categoryRefs {
+		if val == str {
+			return cat, nil
+		}
+	}
+	return 0, errors.New("buna: ui: string does not correspond to category")
 }
