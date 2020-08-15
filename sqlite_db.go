@@ -61,7 +61,7 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 				id INTEGER NOT NULL PRIMARY KEY,
 				coffee_id INTEGER NOT NULL,
 				bought_date TEXT NOT NULL,
-				roast_date TEXT NOT NULL,
+				roast_date TEXT NULL,
 				FOREIGN KEY (coffee_id)
 					REFERENCES coffees (id)
 						ON DELETE RESTRICT
