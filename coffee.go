@@ -35,21 +35,21 @@ func addCoffee(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	fmt.Print("Enter region: ")
+	fmt.Print("Enter origin/region (Format: Region, Country): ")
 	region, quit := validateStrInput(quitStr, true, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter variety: ")
+	fmt.Print("Enter variety (Format: Variety 1, Variety 2, ...): ")
 	variety, quit := validateStrInput(quitStr, true, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter method: ")
+	fmt.Print("Enter processing method: ")
 	method, quit := validateStrInput(quitStr, true, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
