@@ -158,6 +158,9 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 				return fmt.Errorf("buna: ui: failed to create new coffee: %w", err)
 			}
 		case 4:
+			if err := addBrewingMethod(ctx, db); err != nil {
+				return fmt.Errorf("buna: ui: failed to create new coffee brewing method: %w", err)
+			}
 		case 5:
 		}
 	case retrieve:

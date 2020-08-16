@@ -7,6 +7,7 @@ import (
 
 type DB interface {
 	// insert
+	insertBrewingMethod(ctx context.Context, brewingMethod brewingMethod) error
 	insertCoffee(ctx context.Context, coffee coffee) error
 	insertCoffeePurchase(ctx context.Context, coffeePurchase coffeePurchase) error
 
