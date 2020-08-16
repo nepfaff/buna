@@ -17,47 +17,48 @@ type coffee struct {
 
 func addCoffee(ctx context.Context, db DB) error {
 	quitStr := "#"
+	quitMsg := "Quit"
 
 	fmt.Println("Adding new coffee (Enter # to quit):")
 	fmt.Print("Enter coffee name: ")
 	name, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter roaster/producer name: ")
 	roaster, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter region: ")
 	region, quit := validateStrInput(quitStr, true, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter variety: ")
 	variety, quit := validateStrInput(quitStr, true, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter method: ")
 	method, quit := validateStrInput(quitStr, true, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Is decaf (true or false): ")
 	decaf, quit := validateBoolInput(quitStr, true)
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 

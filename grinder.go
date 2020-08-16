@@ -14,26 +14,27 @@ type grinder struct {
 
 func addGrinder(ctx context.Context, db DB) error {
 	quitStr := "#"
+	quitMsg := "Quit"
 
 	fmt.Println("Adding new coffee grinder (Enter # to quit):")
 	fmt.Print("Enter grinder name: ")
 	name, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter grinder's company name: ")
 	company, quit := validateStrInput(quitStr, true, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter the maximum grind setting (Integer): ")
 	maxGrindSetting, quit := validateIntInput(quitStr, true, 0, 100)
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 

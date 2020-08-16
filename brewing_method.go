@@ -12,12 +12,13 @@ type brewingMethod struct {
 
 func addBrewingMethod(ctx context.Context, db DB) error {
 	quitStr := "#"
+	quitMsg := "Quit"
 
 	fmt.Println("Adding new coffee brewing method (Enter # to quit):")
 	fmt.Print("Enter brewing method name: ")
 	name, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
