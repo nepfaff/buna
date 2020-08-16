@@ -73,8 +73,8 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 		if _, err := tx.ExecContext(ctx, `
 			CREATE TABLE IF NOT EXISTS brewing_methods (
 				id INTEGER NOT NULL PRIMARY KEY,
-				method TEXT NOT NULL,
-				UNIQUE(method)
+				name TEXT NOT NULL,
+				UNIQUE(name)
 			)
 		`); err != nil {
 			return fmt.Errorf("buna: sqlite_db: failed to create brewing_methods table: %w", err)
