@@ -121,9 +121,11 @@ func (s *SQLiteDB) getMostRecentBrewedCoffeeNames(ctx context.Context, limit int
 	var names []string
 	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		rows, err := tx.QueryContext(ctx, `
-			SELECT name 
-			FROM coffees
-			ORDER BY id DESC
+			SELECT DISTINCT c.name 
+			FROM brewings as b
+			INNER JOIN coffees as c
+				ON b.coffee_id = c.id
+			ORDER BY b.id DESC
 			LIMIT :limit
 		`,
 			sql.Named("limit", limit),
