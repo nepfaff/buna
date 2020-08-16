@@ -21,26 +21,26 @@ func (s *SQLiteDB) getMostRecentBrewedCoffeeNames(ctx context.Context, limit int
 			sql.Named("limit", limit),
 		)
 		if err != nil {
-			return fmt.Errorf("buna: coffee: failed to retrieve coffee name rows: %w", err)
+			return fmt.Errorf("buna: input_suggestions: failed to retrieve coffee name rows: %w", err)
 		}
 		defer rows.Close()
 
 		for rows.Next() {
 			var name string
 			if err := rows.Scan(&name); err != nil {
-				return fmt.Errorf("buna: coffee: failed to scan row: %w", err)
+				return fmt.Errorf("buna: input_suggestions: failed to scan row: %w", err)
 			}
 
 			names = append(names, name)
 		}
 
 		if err := rows.Err(); err != nil {
-			return fmt.Errorf("buna: coffee: failed to scan last row: %w", err)
+			return fmt.Errorf("buna: input_suggestions: failed to scan last row: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("buna: coffee: getMostRecentBrewedCoffeeNames transaction failed: %w", err)
+		return nil, fmt.Errorf("buna: input_suggestions: getMostRecentBrewedCoffeeNames transaction failed: %w", err)
 	}
 
 	return names, nil
@@ -61,26 +61,66 @@ func (s *SQLiteDB) getMostRecentlyUsedBrewingMethodNames(ctx context.Context, li
 			sql.Named("limit", limit),
 		)
 		if err != nil {
-			return fmt.Errorf("buna: coffee: failed to retrieve brewing method name rows: %w", err)
+			return fmt.Errorf("buna: input_suggestions: failed to retrieve brewing method name rows: %w", err)
 		}
 		defer rows.Close()
 
 		for rows.Next() {
 			var name string
 			if err := rows.Scan(&name); err != nil {
-				return fmt.Errorf("buna: coffee: failed to scan row: %w", err)
+				return fmt.Errorf("buna: input_suggestions: failed to scan row: %w", err)
 			}
 
 			names = append(names, name)
 		}
 
 		if err := rows.Err(); err != nil {
-			return fmt.Errorf("buna: coffee: failed to scan last row: %w", err)
+			return fmt.Errorf("buna: input_suggestions: failed to scan last row: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("buna: coffee: getMostRecentlyUsedBrewingMethodNames transaction failed: %w", err)
+		return nil, fmt.Errorf("buna: input_suggestions: getMostRecentlyUsedBrewingMethodNames transaction failed: %w", err)
+	}
+
+	return names, nil
+}
+
+// limit determines the number of strings in the returned slice.
+func (s *SQLiteDB) getMostRecentlyUsedCoffeeGrinderNames(ctx context.Context, limit int) ([]string, error) {
+	var names []string
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		rows, err := tx.QueryContext(ctx, `
+			SELECT DISTINCT g.name 
+			FROM brewings as b
+			INNER JOIN grinders as g
+				ON b.grinder_id = g.id
+			ORDER BY b.id DESC
+			LIMIT :limit
+		`,
+			sql.Named("limit", limit),
+		)
+		if err != nil {
+			return fmt.Errorf("buna: input_suggestions: failed to retrieve coffee grinder name rows: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var name string
+			if err := rows.Scan(&name); err != nil {
+				return fmt.Errorf("buna: input_suggestions: failed to scan row: %w", err)
+			}
+
+			names = append(names, name)
+		}
+
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("buna: input_suggestions: failed to scan last row: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("buna: input_suggestions: getMostRecentlyUsedCoffeeGrinderNames transaction failed: %w", err)
 	}
 
 	return names, nil
@@ -101,26 +141,26 @@ func (s *SQLiteDB) getRoastersByCoffeeName(ctx context.Context, name string, lim
 			sql.Named("limit", limit),
 		)
 		if err != nil {
-			return fmt.Errorf("buna: coffee: failed to retrieve coffee roaster rows: %w", err)
+			return fmt.Errorf("buna: input_suggestions: failed to retrieve coffee roaster rows: %w", err)
 		}
 		defer rows.Close()
 
 		for rows.Next() {
 			var roaster string
 			if err := rows.Scan(&roaster); err != nil {
-				return fmt.Errorf("buna: coffee: failed to scan row: %w", err)
+				return fmt.Errorf("buna: input_suggestions: failed to scan row: %w", err)
 			}
 
 			roasters = append(roasters, roaster)
 		}
 
 		if err := rows.Err(); err != nil {
-			return fmt.Errorf("buna: coffee: failed to scan last row: %w", err)
+			return fmt.Errorf("buna: input_suggestions: failed to scan last row: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("buna: coffee: getRoastersByCoffeeName transaction failed: %w", err)
+		return nil, fmt.Errorf("buna: input_suggestions: getRoastersByCoffeeName transaction failed: %w", err)
 	}
 
 	return roasters, nil

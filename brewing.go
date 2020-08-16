@@ -79,7 +79,11 @@ func addBrewing(ctx context.Context, db DB) error {
 	}
 
 	fmt.Print("Enter coffee grinder name: ")
-	grinderName, quit := validateStrInput(quitStr, false, nil, nil)
+	grinderSuggestions, err := db.getMostRecentlyUsedCoffeeGrinderNames(ctx, 5)
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get brewing method suggestions: %w", err)
+	}
+	grinderName, quit := validateStrInput(quitStr, false, nil, grinderSuggestions)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
