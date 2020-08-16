@@ -81,7 +81,7 @@ func addBrewing(ctx context.Context, db DB) error {
 	fmt.Print("Enter coffee grinder name: ")
 	grinderSuggestions, err := db.getMostRecentlyUsedCoffeeGrinderNames(ctx, 5)
 	if err != nil {
-		return fmt.Errorf("buna: brewing: failed to get brewing method suggestions: %w", err)
+		return fmt.Errorf("buna: brewing: failed to get coffee grinder suggestions: %w", err)
 	}
 	grinderName, quit := validateStrInput(quitStr, false, nil, grinderSuggestions)
 	if quit {
@@ -92,28 +92,36 @@ func addBrewing(ctx context.Context, db DB) error {
 	fmt.Print("Enter grind setting: ")
 	// This assumes that every grinder has settings in the range 0 to 50
 	// An improvement would be to look up the possible grind settings using the grinder name
-	grindSetting, quit := validateIntInput(quitStr, false, 0, 50)
+	grindSetting, quit := validateIntInput(quitStr, false, 0, 50, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter the total brewing time in seconds: ")
-	totalBrewingTimeSec, quit := validateIntInput(quitStr, false, 10, 1800)
+	totalBrewingTimeSec, quit := validateIntInput(quitStr, false, 10, 1800, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter the coffee weight used in grams: ")
-	coffeeGrams, quit := validateIntInput(quitStr, false, 5, 100)
+	coffeeWeightSuggestion, err := db.getMostRecentlyUsedCoffeeWeights(ctx, brewingMethodName, grinderName, 5)
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get coffee weight suggestions: %w", err)
+	}
+	coffeeGrams, quit := validateIntInput(quitStr, false, 5, 100, coffeeWeightSuggestion)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter the water weight used in grams: ")
-	waterGrams, quit := validateIntInput(quitStr, false, 20, 2000)
+	waterWeightSuggestion, err := db.getMostRecentlyUsedWaterWeights(ctx, brewingMethodName, grinderName, 5)
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get water weight suggestions: %w", err)
+	}
+	waterGrams, quit := validateIntInput(quitStr, false, 20, 2000, waterWeightSuggestion)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -127,7 +135,7 @@ func addBrewing(ctx context.Context, db DB) error {
 	}
 
 	fmt.Print("Enter your rating for this brew (1 <= x <= 10): ")
-	rating, quit := validateIntInput(quitStr, true, 1, 10)
+	rating, quit := validateIntInput(quitStr, true, 1, 10, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -141,7 +149,7 @@ func addBrewing(ctx context.Context, db DB) error {
 	}
 
 	fmt.Print("Enter recommended coffee weight adjustment in grams (-20 <= x <= 20): ")
-	recommendedCoffeeWeightAdjustmentGrams, quit := validateIntInput(quitStr, true, -20, 20)
+	recommendedCoffeeWeightAdjustmentGrams, quit := validateIntInput(quitStr, true, -20, 20, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
