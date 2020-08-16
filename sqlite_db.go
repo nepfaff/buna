@@ -85,7 +85,8 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 				id INTEGER NOT NULL PRIMARY KEY,
 				name TEXT NOT NULL,
 				company TEXT NULL,
-				max_grind_setting INTEGER NULL
+				max_grind_setting INTEGER NULL,
+				UNIQUE(name)
 			)
 		`); err != nil {
 			return fmt.Errorf("buna: sqlite_db: failed to create grinders table: %w", err)
