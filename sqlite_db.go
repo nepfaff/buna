@@ -44,7 +44,7 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 			CREATE TABLE IF NOT EXISTS coffees (
 				id INTEGER NOT NULL PRIMARY KEY,
 				name TEXT NOT NULL,
-				roaster TEXT NULL,
+				roaster TEXT NOT NULL,
 				region TEXT NULL,
 				variety TEXT NULL,
 				method TEXT NULL,
