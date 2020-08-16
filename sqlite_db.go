@@ -84,7 +84,8 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 			CREATE TABLE IF NOT EXISTS grinders (
 				id INTEGER NOT NULL PRIMARY KEY,
 				name TEXT NOT NULL,
-				company TEXT NULL
+				company TEXT NULL,
+				max_grind_setting INTEGER NULL
 			)
 		`); err != nil {
 			return fmt.Errorf("buna: sqlite_db: failed to create grinders table: %w", err)
@@ -107,8 +108,9 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 				coffee_grams INTEGER NOT NULL
 					CHECK (coffee_grams > 0),
 				v60_filter_type TEXT NULL
-					CHECK (v60_filter_type IN ("nan", "eu", "jp")),
-				rating INTEGER NULL CHECK (rating > 0 AND rating <= 10),
+					CHECK (v60_filter_type IN ("eu", "jp")),
+				rating INTEGER NULL
+					CHECK (rating > 0 AND rating <= 10),
 				recommended_grind_setting_adjustment TEXT NULL
 					CHECK (recommended_grind_setting_adjustment IN ("lower", "higher")),
 				recommended_coffee_weight_adjustment_grams INTEGER NULL,
