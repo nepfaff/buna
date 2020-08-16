@@ -10,6 +10,7 @@ type DB interface {
 	insertBrewingMethod(ctx context.Context, brewingMethod brewingMethod) error
 	insertCoffee(ctx context.Context, coffee coffee) error
 	insertCoffeePurchase(ctx context.Context, coffeePurchase coffeePurchase) error
+	insertGrinder(ctx context.Context, grinder grinder) error
 
 	// retrieve
 
