@@ -21,6 +21,7 @@ type category int
 const (
 	create category = iota
 	retrieve
+	// edit
 	// statistics
 	control
 )
@@ -152,6 +153,10 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 				return fmt.Errorf("buna: ui: failed to create new coffee brewing: %w", err)
 			}
 		case 1:
+			// Development note:
+			// Will take some time to implement
+			// Need to add general cupping information and then prompt user to enter individual coffee information
+			// When entered all information for one coffee, ask if want to enter another one
 		case 2:
 			if err := addCoffeePurchase(ctx, db); err != nil {
 				return fmt.Errorf("buna: ui: failed to create new coffee purchase: %w", err)
