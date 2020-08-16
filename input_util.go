@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/jedib0t/go-pretty/table"
 )
 
 type date struct {
@@ -344,4 +346,60 @@ func createDateString(date date) string {
 	sb.WriteString(dayStr)
 
 	return sb.String()
+}
+
+// Returns a 'true' boolean if quit.
+func getIntSelection(options map[int]string, quitStr string) (int, bool) {
+	retry := func() {
+		fmt.Println("Invalid option. The following options are available:")
+		displayIntOptions(options)
+	}
+
+	inputLen := 1
+	if len(options) > 9 {
+		inputLen = 2
+	}
+
+	for {
+		fmt.Print("Enter option (integer): ")
+		var input string
+		fmt.Scanln(&input)
+
+		if input == quitStr {
+			return 0, true
+		}
+
+		if len(input) > inputLen {
+			retry()
+			continue
+		}
+
+		selection, err := strconv.Atoi(input)
+		if err != nil {
+			retry()
+			continue
+		}
+
+		if _, ok := options[selection]; !ok {
+			retry()
+			continue
+		}
+
+		return selection, false
+	}
+}
+
+func displayIntOptions(options map[int]string) {
+	t := table.NewWriter()
+
+	t.AppendHeader(table.Row{"Option", "Description"})
+
+	rows := make([]table.Row, len(options))
+	for i, option := range options {
+		rows[i] = table.Row{i, option}
+	}
+	t.AppendRows(rows)
+
+	t.SetOutputMirror(os.Stdout)
+	t.Render()
 }

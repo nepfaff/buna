@@ -110,7 +110,7 @@ func getSelection() selection {
 	}
 
 	for {
-		fmt.Print("Enter option: ")
+		fmt.Print("Enter main option: ")
 		var input string
 		fmt.Scanln(&input)
 		input = strings.ToUpper(input)
@@ -180,6 +180,9 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 		case 1:
 		case 2:
 		case 3:
+			if err := retrieveCoffee(ctx, db); err != nil {
+				return fmt.Errorf("buna: ui: failed to retrieve coffee: %w", err)
+			}
 		case 4:
 		case 5:
 		}
