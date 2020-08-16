@@ -32,7 +32,7 @@ func addGrinder(ctx context.Context, db DB) error {
 	}
 
 	fmt.Print("Enter the maximum grind setting (Integer): ")
-	maxGrindSetting, quit := validateIntInput(quitStr, true, 0, 100)
+	maxGrindSetting, quit := validateIntInput(quitStr, true, 0, 100, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil

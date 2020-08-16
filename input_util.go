@@ -40,6 +40,10 @@ func validateStrInput(quitStr string, isOptional bool, options []string, suggest
 			return "", true
 		}
 
+		if input == "" && isOptional {
+			return "", false
+		}
+
 		if input == "m" {
 			fmt.Println("Skipping to manual entry.")
 			fmt.Print("Input: ")
@@ -88,7 +92,40 @@ func validateStrInput(quitStr string, isOptional bool, options []string, suggest
 // Returns a 'true' boolean if quit.
 // Optional integers default to 0.
 // The integer bounds are specified using min and max.
-func validateIntInput(quitStr string, isOptional bool, min int, max int) (int, bool) {
+func validateIntInput(quitStr string, isOptional bool, min int, max int, suggestions []int) (int, bool) {
+	suggestionNum := len(suggestions)
+	if suggestionNum > 0 {
+		fmt.Println("\nSelect one of the following (integer) or enter 'm' for manual entry:")
+		for i, suggestion := range suggestions {
+			fmt.Printf("%v. %v\n", i+1, suggestion)
+		}
+
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		input := scanner.Text()
+
+		if input == quitStr {
+			return 0, true
+		}
+
+		if input == "" && isOptional {
+			return 0, false
+		}
+
+		if input == "m" {
+			fmt.Println("Skipping to manual entry.")
+			fmt.Print("Input: ")
+		} else {
+			num, err := strconv.Atoi(input)
+			if err != nil || num > suggestionNum || num <= 0 {
+				fmt.Println("Not a valid option. Skipping to manual entry")
+				fmt.Print("Input: ")
+			} else {
+				return suggestions[num-1], false
+			}
+		}
+	}
+
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	input := scanner.Text()
@@ -103,13 +140,13 @@ func validateIntInput(quitStr string, isOptional bool, min int, max int) (int, b
 		}
 
 		fmt.Print("A value is required. Please try again: ")
-		return validateIntInput(quitStr, isOptional, min, max)
+		return validateIntInput(quitStr, isOptional, min, max, nil)
 	}
 
 	num, err := strconv.Atoi(input)
 	if err != nil || num < min || num > max {
 		fmt.Print("Input invalid. Please try again: ")
-		return validateIntInput(quitStr, isOptional, min, max)
+		return validateIntInput(quitStr, isOptional, min, max, nil)
 	}
 
 	return num, false
@@ -142,13 +179,14 @@ func validateBoolInput(quitStr string, isOptional bool) (bool, bool) {
 // Considers a year to be an integer value x such that 2020 <= x <= time.Year.
 // Returns a 'true' boolean if quit.
 func validateYearInput(quitStr string, isOptional bool) (int, bool) {
-	return validateIntInput(quitStr, isOptional, 2020, time.Now().Year())
+	return validateIntInput(quitStr, isOptional, 2020, time.Now().Year(), []int{time.Now().Year()})
 }
 
 // Considers a month to be an integer value x such that 1 <= x <= 12.
 // Returns a 'true' boolean if quit.
 func validateMonthInput(quitStr string, isOptional bool) (int, bool) {
-	return validateIntInput(quitStr, isOptional, 1, 12)
+	currentMonth := int(time.Now().Month())
+	return validateIntInput(quitStr, isOptional, 1, 12, []int{currentMonth, currentMonth - 1})
 }
 
 // Considers a day to be an integer value x such that 1 <= x <= (max day in month, 29 for Feb).
