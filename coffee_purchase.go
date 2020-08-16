@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 type coffeePurchase struct {
@@ -32,13 +33,16 @@ func addCoffeePurchase(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	boughtDate, quit := getDateInput(quitStr, false, "Enter ? of purchase or ? of arrival if bought online: ")
+	boughtDate, quit := getDateInput(quitStr, false, "Enter ? of purchase or ? of arrival if bought online: ", []date{
+		{year: time.Now().Year(), month: int(time.Now().Month()), day: time.Now().Day()},
+		{year: time.Now().Year(), month: int(time.Now().Month()), day: time.Now().Day() - 1},
+	})
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	roastDate, quit := getDateInput(quitStr, true, "Enter roast ?: ")
+	roastDate, quit := getDateInput(quitStr, true, "Enter roast ?: ", []date{})
 	if quit {
 		fmt.Println(quitMsg)
 		return nil

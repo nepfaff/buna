@@ -182,7 +182,36 @@ func validateDayInput(quitStr string, isOptional bool, month int) (int, bool) {
 // inputMsg is used as the message for the user. All '?' characters are replaced by year, month or day.
 // inputMsg must contain at least one '?' and should end with ": ", for it to make sense to the user.
 // Returns a 'true' boolean if quit.
-func getDateInput(quitStr string, isOptional bool, inputMsg string) (date, bool) {
+func getDateInput(quitStr string, isOptional bool, inputMsg string, suggestions []date) (date, bool) {
+	suggestionNum := len(suggestions)
+	if suggestionNum > 0 {
+		dateMsg := strings.ReplaceAll(inputMsg, "?", "date")
+		fmt.Println(dateMsg)
+		fmt.Println("Select one of the following (integer) or enter 'm' for manual entry:")
+		for i, suggestion := range suggestions {
+			fmt.Printf("%v. %v\n", i+1, createDateString(suggestion))
+		}
+
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		input := scanner.Text()
+
+		if input == quitStr {
+			return date{}, true
+		}
+
+		if input == "m" {
+			fmt.Println("Skipping to manual entry")
+		} else {
+			num, err := strconv.Atoi(input)
+			if err != nil || num > suggestionNum || num <= 0 {
+				fmt.Println("Not a valid option. Skipping to manual entry")
+			} else {
+				return suggestions[num-1], false
+			}
+		}
+	}
+
 	yearMsg := strings.ReplaceAll(inputMsg, "?", "year")
 	fmt.Print(yearMsg)
 	year, quit := validateYearInput(quitStr, isOptional)

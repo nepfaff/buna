@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 type brewing struct {
@@ -29,7 +30,10 @@ func addBrewing(ctx context.Context, db DB) error {
 	quitMsg := "Quit"
 
 	fmt.Println("Adding new coffee brewing (Enter # to quit):")
-	brewingDate, quit := getDateInput(quitStr, false, "Enter brewing ?: ")
+	brewingDate, quit := getDateInput(quitStr, false, "Enter brewing ?: ", []date{
+		{year: time.Now().Year(), month: int(time.Now().Month()), day: time.Now().Day()},
+		{year: time.Now().Year(), month: int(time.Now().Month()), day: time.Now().Day() - 1},
+	})
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -56,7 +60,7 @@ func addBrewing(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	roastDate, quit := getDateInput(quitStr, true, "Enter roast ?: ")
+	roastDate, quit := getDateInput(quitStr, true, "Enter roast ?: ", []date{})
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
