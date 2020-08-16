@@ -15,65 +15,40 @@ type coffeePurchase struct {
 
 func addCoffeePurchase(ctx context.Context, db DB) error {
 	quitStr := "#"
+	quitMsg := "Quit"
 
 	fmt.Println("Adding new coffee purchase (Enter # to quit):")
 	fmt.Print("Enter coffee name: ")
 	name, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter roaster/producer name: ")
-	roaster, quit := validateStrInput(quitStr, true, []string{})
+	roaster, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter year of purchase or year of arrival if bought online: ")
-	boughtYear, quit := validateYearInput(quitStr, false)
+	boughtDate, quit := getDateInput(quitStr, false, "Enter ? of purchase or ? of arrival if bought online: ")
 	if quit {
-		fmt.Println("Quit")
-		return nil
-	}
-	fmt.Print("Enter month of purchase or month of arrival if bought online: ")
-	boughtMonth, quit := validateMonthInput(quitStr, false)
-	if quit {
-		fmt.Println("Quit")
-		return nil
-	}
-	fmt.Print("Enter day of purchase or day of arrival if bought online: ")
-	boughtDay, quit := validateDayInput(quitStr, false, boughtMonth)
-	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter roast year: ")
-	roastYear, quit := validateYearInput(quitStr, true)
+	roastDate, quit := getDateInput(quitStr, true, "Enter roast ?: ")
 	if quit {
-		fmt.Println("Quit")
-		return nil
-	}
-	fmt.Print("Enter roast month: ")
-	roastMonth, quit := validateMonthInput(quitStr, true)
-	if quit {
-		fmt.Println("Quit")
-		return nil
-	}
-	fmt.Print("Enter roast day: ")
-	roastDay, quit := validateDayInput(quitStr, true, roastMonth)
-	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
 	coffeePurchase := coffeePurchase{
 		coffeeName:    name,
 		coffeeRoaster: roaster,
-		boughtDate:    createDateString(boughtYear, boughtMonth, boughtDay),
-		roastDate:     createDateString(roastYear, roastMonth, roastDay),
+		boughtDate:    createDateString(boughtDate),
+		roastDate:     createDateString(roastDate),
 	}
 
 	if err := db.insertCoffeePurchase(ctx, coffeePurchase); err != nil {

@@ -29,20 +29,7 @@ func addBrewing(ctx context.Context, db DB) error {
 	quitMsg := "Quit"
 
 	fmt.Println("Adding new coffee brewing (Enter # to quit):")
-	fmt.Print("Enter brewing year: ")
-	brewingYear, quit := validateYearInput(quitStr, false)
-	if quit {
-		fmt.Println(quitMsg)
-		return nil
-	}
-	fmt.Print("Enter brewing month: ")
-	brewingMonth, quit := validateMonthInput(quitStr, false)
-	if quit {
-		fmt.Println(quitMsg)
-		return nil
-	}
-	fmt.Print("Enter brewing day: ")
-	brewingDay, quit := validateDayInput(quitStr, false, brewingMonth)
+	brewingDate, quit := getDateInput(quitStr, false, "Enter brewing ?: ")
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -51,38 +38,25 @@ func addBrewing(ctx context.Context, db DB) error {
 	fmt.Print("Enter coffee name: ")
 	coffeeName, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter roaster/producer name: ")
-	coffeeRoaster, quit := validateStrInput(quitStr, true, []string{})
+	coffeeRoaster, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter brewing method name: ")
 	brewingMethodName, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter roast year: ")
-	roastYear, quit := validateYearInput(quitStr, true)
-	if quit {
-		fmt.Println(quitMsg)
-		return nil
-	}
-	fmt.Print("Enter roast month: ")
-	roastMonth, quit := validateMonthInput(quitStr, true)
-	if quit {
-		fmt.Println(quitMsg)
-		return nil
-	}
-	fmt.Print("Enter roast day: ")
-	roastDay, quit := validateDayInput(quitStr, true, roastMonth)
+	roastDate, quit := getDateInput(quitStr, true, "Enter roast ?: ")
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -91,7 +65,7 @@ func addBrewing(ctx context.Context, db DB) error {
 	fmt.Print("Enter coffee grinder name: ")
 	grinderName, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
-		fmt.Println("Quit")
+		fmt.Println(quitMsg)
 		return nil
 	}
 
@@ -161,11 +135,11 @@ func addBrewing(ctx context.Context, db DB) error {
 	}
 
 	brewing := brewing{
-		date:                                   createDateString(brewingYear, brewingMonth, brewingDay),
+		date:                                   createDateString(brewingDate),
 		coffeeName:                             coffeeName,
 		coffeeRoaster:                          coffeeRoaster,
 		brewingMethodName:                      brewingMethodName,
-		roastDate:                              createDateString(roastYear, roastMonth, roastDay),
+		roastDate:                              createDateString(roastDate),
 		grinderName:                            grinderName,
 		grindSetting:                           grindSetting,
 		totalBrewingTimeSec:                    totalBrewingTimeSec,

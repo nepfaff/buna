@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+type date struct {
+	year  int
+	month int
+	day   int
+}
+
 // Returns a 'true' boolean if quit
 // Optional strings default to "".
 // Pass an empty slice for options if want to allow any string.
@@ -170,17 +176,60 @@ func validateDayInput(quitStr string, isOptional bool, month int) (int, bool) {
 	return day, false
 }
 
+// Used to get a date input by promting the user for year, month and day separately.
+// The user is not prompted to enter month and day if date is optional and no value is entered for year
+// (same for day if no value is entered for month).
+// inputMsg is used as the message for the user. All '?' characters are replaced by year, month or day.
+// inputMsg must contain at least one '?' and should end with ": ", for it to make sense to the user.
+// Returns a 'true' boolean if quit.
+func getDateInput(quitStr string, isOptional bool, inputMsg string) (date, bool) {
+	yearMsg := strings.ReplaceAll(inputMsg, "?", "year")
+	fmt.Print(yearMsg)
+	year, quit := validateYearInput(quitStr, isOptional)
+	if quit {
+		return date{}, true
+	}
+
+	if year == 0 {
+		return date{}, false
+	}
+
+	monthMsg := strings.ReplaceAll(inputMsg, "?", "month")
+	fmt.Print(monthMsg)
+	month, quit := validateMonthInput(quitStr, isOptional)
+	if quit {
+		return date{}, true
+	}
+
+	if month == 0 {
+		return date{}, false
+	}
+
+	dayMsg := strings.ReplaceAll(inputMsg, "?", "day")
+	fmt.Print(dayMsg)
+	day, quit := validateDayInput(quitStr, isOptional, month)
+	if quit {
+		return date{}, true
+	}
+
+	return date{
+		year:  year,
+		month: month,
+		day:   day,
+	}, false
+}
+
 // Creates a date sring in the format "YYYY-MM-DD".
 // Expects the inputs to be valid.
-func createDateString(year int, month int, day int) string {
-	yearStr := strconv.Itoa(year)
+func createDateString(date date) string {
+	yearStr := strconv.Itoa(date.year)
 
-	monthStr := strconv.Itoa(month)
+	monthStr := strconv.Itoa(date.month)
 	if len(monthStr) < 2 {
 		monthStr = "0" + monthStr
 	}
 
-	dayStr := strconv.Itoa(day)
+	dayStr := strconv.Itoa(date.day)
 	if len(dayStr) < 2 {
 		dayStr = "0" + dayStr
 	}
