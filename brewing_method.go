@@ -16,7 +16,7 @@ func addBrewingMethod(ctx context.Context, db DB) error {
 
 	fmt.Println("Adding new coffee brewing method (Enter # to quit):")
 	fmt.Print("Enter brewing method name: ")
-	name, quit := validateStrInput(quitStr, false, []string{})
+	name, quit := validateStrInput(quitStr, false, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil

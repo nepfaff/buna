@@ -18,7 +18,42 @@ type date struct {
 // Returns a 'true' boolean if quit
 // Optional strings default to "".
 // Pass an empty slice for options if want to allow any string.
-func validateStrInput(quitStr string, isOptional bool, options []string) (string, bool) {
+// Otherwise, only strings that appear in options will be accepted (+ "" if isOptional is true).
+// If suggestions is empty and options is not empty, options will be used as suggestions.
+func validateStrInput(quitStr string, isOptional bool, options []string, suggestions []string) (string, bool) {
+	if len(suggestions) == 0 && len(options) > 0 {
+		suggestions = options
+	}
+
+	suggestionNum := len(suggestions)
+	if suggestionNum > 0 {
+		fmt.Println("\nSelect one of the following (integer) or enter 'm' for manual entry:")
+		for i, suggestion := range suggestions {
+			fmt.Printf("%v. %v\n", i+1, suggestion)
+		}
+
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		input := scanner.Text()
+
+		if input == quitStr {
+			return "", true
+		}
+
+		if input == "m" {
+			fmt.Println("Skipping to manual entry.")
+			fmt.Print("Input: ")
+		} else {
+			num, err := strconv.Atoi(input)
+			if err != nil || num > suggestionNum || num <= 0 {
+				fmt.Println("Not a valid option. Skipping to manual entry")
+				fmt.Print("Input: ")
+			} else {
+				return suggestions[num-1], false
+			}
+		}
+	}
+
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	input := scanner.Text()
@@ -33,7 +68,7 @@ func validateStrInput(quitStr string, isOptional bool, options []string) (string
 		}
 
 		fmt.Print("A value is required. Please try again: ")
-		return validateStrInput(quitStr, isOptional, options)
+		return validateStrInput(quitStr, isOptional, options, nil)
 	}
 
 	if len(options) > 0 {
@@ -44,7 +79,7 @@ func validateStrInput(quitStr string, isOptional bool, options []string) (string
 		}
 
 		fmt.Print("Not a valid option. Please try again: ")
-		return validateStrInput(quitStr, isOptional, options)
+		return validateStrInput(quitStr, isOptional, options, nil)
 	}
 
 	return input, false

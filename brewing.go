@@ -40,21 +40,21 @@ func addBrewing(ctx context.Context, db DB) error {
 	}
 
 	fmt.Print("Enter coffee name: ")
-	coffeeName, quit := validateStrInput(quitStr, false, []string{})
+	coffeeName, quit := validateStrInput(quitStr, false, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter roaster/producer name: ")
-	coffeeRoaster, quit := validateStrInput(quitStr, false, []string{})
+	coffeeRoaster, quit := validateStrInput(quitStr, false, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter brewing method name: ")
-	brewingMethodName, quit := validateStrInput(quitStr, false, []string{})
+	brewingMethodName, quit := validateStrInput(quitStr, false, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -67,7 +67,7 @@ func addBrewing(ctx context.Context, db DB) error {
 	}
 
 	fmt.Print("Enter coffee grinder name: ")
-	grinderName, quit := validateStrInput(quitStr, false, []string{})
+	grinderName, quit := validateStrInput(quitStr, false, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -103,8 +103,8 @@ func addBrewing(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	fmt.Print("Enter v60 filter type if applicable (eu or jp): ")
-	v60FilterType, quit := validateStrInput(quitStr, true, []string{"eu", "jp"})
+	fmt.Print("Enter v60 filter type if applicable: ")
+	v60FilterType, quit := validateStrInput(quitStr, true, []string{"eu", "jp"}, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -117,8 +117,8 @@ func addBrewing(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	fmt.Print("Enter recommended grind setting adjustment (lower or higher): ")
-	recommendedGrindSettingAdjustment, quit := validateStrInput(quitStr, true, []string{"lower", "higher"})
+	fmt.Print("Enter recommended grind setting adjustment: ")
+	recommendedGrindSettingAdjustment, quit := validateStrInput(quitStr, true, []string{"lower", "higher"}, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -132,7 +132,7 @@ func addBrewing(ctx context.Context, db DB) error {
 	}
 
 	fmt.Print("Enter some notes about this brewing: ")
-	notes, quit := validateStrInput(quitStr, true, []string{})
+	notes, quit := validateStrInput(quitStr, true, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil

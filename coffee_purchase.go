@@ -20,14 +20,14 @@ func addCoffeePurchase(ctx context.Context, db DB) error {
 
 	fmt.Println("Adding new coffee purchase (Enter # to quit):")
 	fmt.Print("Enter coffee name: ")
-	name, quit := validateStrInput(quitStr, false, []string{})
+	name, quit := validateStrInput(quitStr, false, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
 	fmt.Print("Enter roaster/producer name: ")
-	roaster, quit := validateStrInput(quitStr, false, []string{})
+	roaster, quit := validateStrInput(quitStr, false, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
