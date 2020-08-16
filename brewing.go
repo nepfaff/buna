@@ -62,7 +62,11 @@ func addBrewing(ctx context.Context, db DB) error {
 	}
 
 	fmt.Print("Enter brewing method name: ")
-	brewingMethodName, quit := validateStrInput(quitStr, false, nil, nil)
+	brewingMethodSuggestions, err := db.getMostRecentlyUsedBrewingMethodNames(ctx, 5)
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get brewing method suggestions: %w", err)
+	}
+	brewingMethodName, quit := validateStrInput(quitStr, false, nil, brewingMethodSuggestions)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
