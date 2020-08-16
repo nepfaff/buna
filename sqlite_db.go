@@ -169,7 +169,7 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 	return nil
 }
 
-func (s *SQLiteDB) TransactContext(ctx context.Context, f func(ctx context.Context, tx *sql.Tx) error) error {
+func (s *SQLiteDB) TransactContext(ctx context.Context, f func(ctx context.Context, tx *sql.Tx) error) (err error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("buna: sqlite_db: failed to begin a transaction: %w", err)
