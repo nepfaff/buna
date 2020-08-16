@@ -51,7 +51,11 @@ func addBrewing(ctx context.Context, db DB) error {
 	}
 
 	fmt.Print("Enter roaster/producer name: ")
-	coffeeRoaster, quit := validateStrInput(quitStr, false, nil, nil)
+	roasterSuggestions, err := db.getRoastersByCoffeeName(ctx, coffeeName, 5)
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get roaster suggestions: %w", err)
+	}
+	coffeeRoaster, quit := validateStrInput(quitStr, false, nil, roasterSuggestions)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil

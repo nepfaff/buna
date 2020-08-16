@@ -15,6 +15,7 @@ type DB interface {
 
 	// retrieve
 	getMostRecentBrewedCoffeeNames(ctx context.Context, limit int) ([]string, error)
+	getRoastersByCoffeeName(ctx context.Context, name string, limit int) ([]string, error)
 
 	// general
 	TransactContext(ctx context.Context, f func(ctx context.Context, tx *sql.Tx) error) error
