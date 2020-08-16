@@ -111,7 +111,45 @@ func (s *SQLiteDB) insertCoffee(ctx context.Context, coffee coffee) error {
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("buna: coffee: transaction failed: %w", err)
+		return fmt.Errorf("buna: coffee: insertCoffee transaction failed: %w", err)
 	}
 	return nil
+}
+
+// limit determines the number of strings in the returned slice.
+func (s *SQLiteDB) getMostRecentBrewedCoffeeNames(ctx context.Context, limit int) ([]string, error) {
+	var summaries []string
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		rows, err := tx.QueryContext(ctx, `
+			SELECT name 
+			FROM coffees
+			ORDER BY id DESC
+			LIMIT :limit
+		`,
+			sql.Named("limit", limit),
+		)
+		if err != nil {
+			return fmt.Errorf("buna: coffee: failed to retrieve coffee name rows: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var name string
+			if err := rows.Scan(&name); err != nil {
+				return fmt.Errorf("buna: coffee: failed to scan row: %w", err)
+			}
+
+			summaries = append(summaries, name)
+		}
+
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("buna: coffee: failed to scan last row: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("buna: coffee: getMostRecentBrewedCoffeeSummaries transaction failed: %w", err)
+	}
+
+	return summaries, nil
 }

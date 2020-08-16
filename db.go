@@ -14,6 +14,7 @@ type DB interface {
 	insertGrinder(ctx context.Context, grinder grinder) error
 
 	// retrieve
+	getMostRecentBrewedCoffeeNames(ctx context.Context, limit int) ([]string, error)
 
 	// general
 	TransactContext(ctx context.Context, f func(ctx context.Context, tx *sql.Tx) error) error

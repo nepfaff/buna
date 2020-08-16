@@ -40,7 +40,11 @@ func addBrewing(ctx context.Context, db DB) error {
 	}
 
 	fmt.Print("Enter coffee name: ")
-	coffeeName, quit := validateStrInput(quitStr, false, nil, nil)
+	coffeeSuggestions, err := db.getMostRecentBrewedCoffeeNames(ctx, 5)
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get coffee suggestions: %w", err)
+	}
+	coffeeName, quit := validateStrInput(quitStr, false, nil, coffeeSuggestions)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
