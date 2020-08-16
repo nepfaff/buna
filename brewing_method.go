@@ -29,6 +29,8 @@ func addBrewingMethod(ctx context.Context, db DB) error {
 	if err := db.insertBrewingMethod(ctx, brewingMethod); err != nil {
 		return fmt.Errorf("buna: brewing_method: failed to insert brewingMethod: %w", err)
 	}
+
+	fmt.Println("Added coffee brewing method successfully")
 	return nil
 }
 

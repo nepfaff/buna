@@ -54,6 +54,8 @@ func addCoffeePurchase(ctx context.Context, db DB) error {
 	if err := db.insertCoffeePurchase(ctx, coffeePurchase); err != nil {
 		return fmt.Errorf("buna: coffee_purchase: failed to insert coffee_purchase: %w", err)
 	}
+
+	fmt.Println("Added coffee pruchase successfully")
 	return nil
 }
 

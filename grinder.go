@@ -47,6 +47,8 @@ func addGrinder(ctx context.Context, db DB) error {
 	if err := db.insertGrinder(ctx, grinder); err != nil {
 		return fmt.Errorf("buna: grinder: failed to insert coffee grinder: %w", err)
 	}
+
+	fmt.Println("Added coffee grinder successfully")
 	return nil
 }
 

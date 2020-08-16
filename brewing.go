@@ -155,6 +155,8 @@ func addBrewing(ctx context.Context, db DB) error {
 	if err := db.insertBrewing(ctx, brewing); err != nil {
 		return fmt.Errorf("buna: brewing: failed to insert coffee brewing: %w", err)
 	}
+
+	fmt.Println("Added coffee brewing successfully")
 	return nil
 }
 
