@@ -10,6 +10,7 @@ import (
 )
 
 // Returns a 'true' boolean if quit
+// Optional strings default to "".
 func validateStrInput(quitStr string, isOptional bool) (string, bool) {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
@@ -25,6 +26,36 @@ func validateStrInput(quitStr string, isOptional bool) (string, bool) {
 	}
 
 	return input, false
+}
+
+// Returns a 'true' boolean if quit.
+// Optional integers default to 0.
+// The integer bounds are specified using min and max.
+func validateIntInput(quitStr string, isOptional bool, min int, max int) (int, bool) {
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	input := scanner.Text()
+
+	if input == quitStr {
+		return 0, true
+	}
+
+	if input == "" {
+		if isOptional {
+			return 0, false
+		}
+
+		fmt.Print("A value is required. Please try again: ")
+		return validateIntInput(quitStr, isOptional, min, max)
+	}
+
+	num, err := strconv.Atoi(input)
+	if err != nil || num < min || num > max {
+		fmt.Print("Input invalid. Please try again: ")
+		return validateIntInput(quitStr, isOptional, min, max)
+	}
+
+	return num, false
 }
 
 // Second return boolean is 'true' if quit.
@@ -54,51 +85,13 @@ func validateBoolInput(quitStr string, isOptional bool) (bool, bool) {
 // Considers a year to be an integer value x such that 2020 <= x <= time.Year.
 // Returns a 'true' boolean if quit.
 func validateYearInput(quitStr string, isOptional bool) (int, bool) {
-	return validateYearMonthInput(quitStr, isOptional, true)
+	return validateIntInput(quitStr, isOptional, 2020, time.Now().Year())
 }
 
 // Considers a month to be an integer value x such that 1 <= x <= 12.
 // Returns a 'true' boolean if quit.
 func validateMonthInput(quitStr string, isOptional bool) (int, bool) {
-	return validateYearMonthInput(quitStr, isOptional, false)
-}
-
-// Helper function for validateYearInput() and validateMonthInput().
-// isYear must be true for validateYearInput() and false for validateMonthInput()
-func validateYearMonthInput(quitStr string, isOptional bool, isYear bool) (int, bool) {
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	input := scanner.Text()
-
-	if input == quitStr {
-		return 0, true
-	}
-
-	if input == "" {
-		if isOptional {
-			return 0, false
-		}
-
-		fmt.Print("A value is required. Please try again: ")
-		return validateYearMonthInput(quitStr, isOptional, isYear)
-	}
-
-	var min, max int
-	if isYear {
-		min = 2020
-		max = time.Now().Year()
-	} else {
-		min = 1
-		max = 12
-	}
-
-	num, err := strconv.Atoi(input)
-	if err != nil || num < min || num > max {
-		fmt.Print("Input invalid. Please try again: ")
-		return validateYearMonthInput(quitStr, isOptional, isYear)
-	}
-
-	return num, false
+	return validateIntInput(quitStr, isOptional, 1, 12)
 }
 
 // Considers a day to be an integer value x such that 1 <= x <= (max day in month, 29 for Feb).
@@ -162,7 +155,7 @@ func validateDayInput(quitStr string, isOptional bool, month int) (int, bool) {
 }
 
 // Creates a date sring in the format "YYYY-MM-DD".
-// Expects the inputs to be valid
+// Expects the inputs to be valid.
 func createDateString(year int, month int, day int) string {
 	yearStr := strconv.Itoa(year)
 
