@@ -190,7 +190,7 @@ func (s *SQLiteDB) insertBrewing(ctx context.Context, brewing brewing) error {
 		if err := tx.QueryRowContext(ctx, `
 			SELECT id
 			FROM coffees
-			WHERE name = :coffeeName AND roaster = :coffeeRoaster
+			WHERE name = :coffeeName AND (roaster = :coffeeRoaster OR (:coffeeRoaster = "" AND roaster IS NULL))
 		`,
 			sql.Named("coffeeName", brewing.coffeeName),
 			sql.Named("coffeeRoaster", brewing.coffeeRoaster),

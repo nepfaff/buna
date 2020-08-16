@@ -62,6 +62,17 @@ func (s *SQLiteDB) insertGrinder(ctx context.Context, grinder grinder) error {
 			return fmt.Errorf("buna: grinder: failed to insert coffee grinder into db: %w", err)
 		}
 
+		if _, err := tx.ExecContext(ctx, `
+			UPDATE grinders
+			SET company = NULLIF(company, ""),
+				max_grind_setting = NULLIF(max_grind_setting, 0)
+			WHERE name = :name
+		`,
+			sql.Named("name", grinder.name),
+		); err != nil {
+			return fmt.Errorf("buna: grinder: failed to set null values: %w", err)
+		}
+
 		return nil
 	}); err != nil {
 		return fmt.Errorf("buna: grinder: transaction failed: %w", err)

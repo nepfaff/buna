@@ -88,7 +88,7 @@ func (s *SQLiteDB) insertCoffeePurchase(ctx context.Context, coffeePurchase coff
 		if err := tx.QueryRowContext(ctx, `
 			SELECT id
 			FROM coffees
-			WHERE name = :coffeeName AND roaster = :coffeeRoaster
+			WHERE name = :coffeeName AND (roaster = :coffeeRoaster OR (:coffeeRoaster = "" AND roaster IS NULL))
 		`,
 			sql.Named("coffeeName", coffeePurchase.coffeeName),
 			sql.Named("coffeeRoaster", coffeePurchase.coffeeRoaster),
@@ -106,6 +106,17 @@ func (s *SQLiteDB) insertCoffeePurchase(ctx context.Context, coffeePurchase coff
 			sql.Named("roastDate", coffeePurchase.roastDate),
 		); err != nil {
 			return fmt.Errorf("buna: coffee_purchase: failed to insert coffee purchase into db: %w", err)
+		}
+
+		if _, err := tx.ExecContext(ctx, `
+			UPDATE purchases
+			SET roast_date = NULLIF(roast_date, "0-00-00")
+			WHERE coffee_id = :coffeeID AND bought_date = :boughtDate
+		`,
+			sql.Named("coffeeID", coffeeID),
+			sql.Named("boughtDate", coffeePurchase.boughtDate),
+		); err != nil {
+			return fmt.Errorf("buna: coffee_purchase: failed to set null values: %w", err)
 		}
 
 		return nil

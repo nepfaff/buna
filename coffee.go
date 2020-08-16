@@ -27,7 +27,7 @@ func addCoffee(ctx context.Context, db DB) error {
 	}
 
 	fmt.Print("Enter roaster/producer name: ")
-	roaster, quit := validateStrInput(quitStr, true, []string{})
+	roaster, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
 		fmt.Println("Quit")
 		return nil
@@ -91,6 +91,21 @@ func (s *SQLiteDB) insertCoffee(ctx context.Context, coffee coffee) error {
 		); err != nil {
 			return fmt.Errorf("buna: coffee: failed to insert coffee into db: %w", err)
 		}
+
+		if _, err := tx.ExecContext(ctx, `
+			UPDATE coffees
+			SET roaster = NULLIF(roaster, ""),
+				region = NULLIF(region, ""),
+				variety = NULLIF(variety, ""),
+				method = NULLIF(method, ""),
+				decaf = NULLIF(decaf, "")
+			WHERE name = :name
+		`,
+			sql.Named("name", coffee.name),
+		); err != nil {
+			return fmt.Errorf("buna: coffee: failed to set null values: %w", err)
+		}
+
 		return nil
 	}); err != nil {
 		return fmt.Errorf("buna: coffee: transaction failed: %w", err)
