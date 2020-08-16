@@ -17,14 +17,14 @@ func addGrinder(ctx context.Context, db DB) error {
 
 	fmt.Println("Adding new coffee grinder (Enter # to quit):")
 	fmt.Print("Enter grinder name: ")
-	name, quit := validateStrInput(quitStr, false)
+	name, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
 		fmt.Println("Quit")
 		return nil
 	}
 
 	fmt.Print("Enter grinder's company name: ")
-	company, quit := validateStrInput(quitStr, true)
+	company, quit := validateStrInput(quitStr, true, []string{})
 	if quit {
 		fmt.Println("Quit")
 		return nil

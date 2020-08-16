@@ -11,7 +11,8 @@ import (
 
 // Returns a 'true' boolean if quit
 // Optional strings default to "".
-func validateStrInput(quitStr string, isOptional bool) (string, bool) {
+// Pass an empty slice for options if want to allow any string.
+func validateStrInput(quitStr string, isOptional bool, options []string) (string, bool) {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	input := scanner.Text()
@@ -20,9 +21,24 @@ func validateStrInput(quitStr string, isOptional bool) (string, bool) {
 		return "", true
 	}
 
-	if !isOptional && input == "" {
+	if input == "" {
+		if isOptional {
+			return "", false
+		}
+
 		fmt.Print("A value is required. Please try again: ")
-		return validateStrInput(quitStr, isOptional)
+		return validateStrInput(quitStr, isOptional, options)
+	}
+
+	if len(options) > 0 {
+		for _, option := range options {
+			if input == option {
+				return input, false
+			}
+		}
+
+		fmt.Print("Not a valid option. Please try again: ")
+		return validateStrInput(quitStr, isOptional, options)
 	}
 
 	return input, false

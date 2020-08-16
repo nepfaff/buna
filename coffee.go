@@ -20,35 +20,35 @@ func addCoffee(ctx context.Context, db DB) error {
 
 	fmt.Println("Adding new coffee (Enter # to quit):")
 	fmt.Print("Enter coffee name: ")
-	name, quit := validateStrInput(quitStr, false)
+	name, quit := validateStrInput(quitStr, false, []string{})
 	if quit {
 		fmt.Println("Quit")
 		return nil
 	}
 
 	fmt.Print("Enter roaster/producer name: ")
-	roaster, quit := validateStrInput(quitStr, true)
+	roaster, quit := validateStrInput(quitStr, true, []string{})
 	if quit {
 		fmt.Println("Quit")
 		return nil
 	}
 
 	fmt.Print("Enter region: ")
-	region, quit := validateStrInput(quitStr, true)
+	region, quit := validateStrInput(quitStr, true, []string{})
 	if quit {
 		fmt.Println("Quit")
 		return nil
 	}
 
 	fmt.Print("Enter variety: ")
-	variety, quit := validateStrInput(quitStr, true)
+	variety, quit := validateStrInput(quitStr, true, []string{})
 	if quit {
 		fmt.Println("Quit")
 		return nil
 	}
 
 	fmt.Print("Enter method: ")
-	method, quit := validateStrInput(quitStr, true)
+	method, quit := validateStrInput(quitStr, true, []string{})
 	if quit {
 		fmt.Println("Quit")
 		return nil
