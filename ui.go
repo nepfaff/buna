@@ -148,6 +148,9 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 	case create:
 		switch selection.index {
 		case 0:
+			if err := addBrewing(ctx, db); err != nil {
+				return fmt.Errorf("buna: ui: failed to create new coffee brewing: %w", err)
+			}
 		case 1:
 		case 2:
 			if err := addCoffeePurchase(ctx, db); err != nil {
