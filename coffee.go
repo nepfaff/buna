@@ -5,6 +5,14 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
+
+	"github.com/jedib0t/go-pretty/table"
+)
+
+const (
+	quitStr = "#"
+	quitMsg = "Quit"
 )
 
 type coffee struct {
@@ -17,9 +25,6 @@ type coffee struct {
 }
 
 func addCoffee(ctx context.Context, db DB) error {
-	quitStr := "#"
-	quitMsg := "Quit"
-
 	fmt.Println("Adding new coffee (Enter # to quit):")
 	fmt.Print("Enter coffee name: ")
 	name, quit := validateStrInput(quitStr, false, nil, nil)
@@ -101,8 +106,7 @@ func (s *SQLiteDB) insertCoffee(ctx context.Context, coffee coffee) error {
 			SET roaster = NULLIF(roaster, ""),
 				region = NULLIF(region, ""),
 				variety = NULLIF(variety, ""),
-				method = NULLIF(method, ""),
-				decaf = NULLIF(decaf, "")
+				method = NULLIF(method, "")
 			WHERE name = :name
 		`,
 			sql.Named("name", coffee.name),
@@ -118,9 +122,6 @@ func (s *SQLiteDB) insertCoffee(ctx context.Context, coffee coffee) error {
 }
 
 func retrieveCoffee(ctx context.Context, db DB) error {
-	quitStr := "#"
-	quitMsg := "Quit"
-
 	options := map[int]string{
 		0: "Retrieve coffee by name",
 		1: "Retrieve coffees ordered by last added",
@@ -152,6 +153,9 @@ func runRetrieveCoffeeSelection(ctx context.Context, selection int, db DB) error
 	switch selection {
 	case 0:
 	case 1:
+		if err := displayCoffeesByLastAdded(ctx, db); err != nil {
+			return fmt.Errorf("buna: coffee: failed to display coffees by last added: %w", err)
+		}
 	case 2:
 	case 3:
 	case 4:
@@ -161,5 +165,43 @@ func runRetrieveCoffeeSelection(ctx context.Context, selection int, db DB) error
 	default:
 		return errors.New("buna: coffee: invalid retrieve selection")
 	}
+	return nil
+}
+
+// Promts user for an optional limit.
+func displayCoffeesByLastAdded(ctx context.Context, db DB) error {
+	const maxDisplayAmount = 100
+
+	fmt.Println("Displaying coffees by last added (Enter # to quit):")
+	fmt.Print("Enter a limit for the number of coffees to display: ")
+	limit, quit := validateIntInput(quitStr, true, 1, maxDisplayAmount, []int{})
+	if quit {
+		fmt.Println(quitMsg)
+		return nil
+	}
+
+	if limit == 0 {
+		limit = maxDisplayAmount
+	}
+
+	coffees, err := db.getCoffeesByLastAdded(ctx, limit)
+	if err != nil {
+		return fmt.Errorf("buna: coffee: failed to get coffees by last added: %w", err)
+	}
+
+	t := table.NewWriter()
+
+	t.AppendHeader(table.Row{"Name", "Roaster", "Region/Origin", "Variety", "Processing method", "Decaf"})
+
+	rows := make([]table.Row, len(coffees))
+	for i, coffee := range coffees {
+		rows[i] = table.Row{coffee.name, coffee.roaster, coffee.region, coffee.variety, coffee.method, coffee.decaf}
+	}
+
+	t.AppendRows(rows)
+
+	t.SetOutputMirror(os.Stdout)
+	t.Render()
+
 	return nil
 }

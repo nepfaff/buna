@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"reflect"
 
 	_ "github.com/mattn/go-sqlite3"
 	"go.uber.org/zap"
@@ -167,6 +168,64 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func (s *SQLiteDB) getCoffeesByLastAdded(ctx context.Context, limit int) ([]coffee, error) {
+	coffees := make([]coffee, 0, limit)
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		rows, err := tx.QueryContext(ctx, `
+			SELECT name, roaster, region, variety, method, decaf
+			FROM coffees
+			ORDER BY id DESC
+			LIMIT :limit
+		`,
+			sql.Named("limit", limit),
+		)
+		if err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to retrieve brewing method name rows: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var coffee coffee
+			var region, variety, method, decaf interface{}
+			if err := rows.Scan(&coffee.name, &coffee.roaster, &region, &variety, &method, &decaf); err != nil {
+				return fmt.Errorf("buna: sqlite_db: failed to scan row: %w", err)
+			}
+
+			// Deal with possible NULL values
+			if v := reflect.ValueOf(region); v.Kind() == reflect.String {
+				coffee.region = region.(string)
+			} else {
+				coffee.region = "Unknown"
+			}
+			if v := reflect.ValueOf(variety); v.Kind() == reflect.String {
+				coffee.variety = variety.(string)
+			} else {
+				coffee.variety = "Unknown"
+			}
+			if v := reflect.ValueOf(method); v.Kind() == reflect.String {
+				coffee.method = method.(string)
+			} else {
+				coffee.method = "Unknown"
+			}
+			if v := reflect.ValueOf(decaf); v.Kind() == reflect.Bool {
+				coffee.decaf = decaf.(bool)
+			}
+
+			coffees = append(coffees, coffee)
+		}
+
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to scan last row: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("buna: sqlite_db: displayCoffeesByLastAdded transaction failed: %w", err)
+	}
+
+	return coffees, nil
 }
 
 func (s *SQLiteDB) TransactContext(ctx context.Context, f func(ctx context.Context, tx *sql.Tx) error) (err error) {
