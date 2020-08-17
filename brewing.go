@@ -40,7 +40,7 @@ func addBrewing(ctx context.Context, db DB) error {
 	}
 
 	fmt.Print("Enter coffee name: ")
-	coffeeSuggestions, err := db.getMostRecentBrewedCoffeeNames(ctx, 5)
+	coffeeSuggestions, err := db.getCoffeeNameSuggestions(ctx, 5)
 	if err != nil {
 		return fmt.Errorf("buna: brewing: failed to get coffee suggestions: %w", err)
 	}

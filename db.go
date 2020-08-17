@@ -14,7 +14,7 @@ type DB interface {
 	insertGrinder(ctx context.Context, grinder grinder) error
 
 	// retrieve
-	getMostRecentBrewedCoffeeNames(ctx context.Context, limit int) ([]string, error)
+	getCoffeeNameSuggestions(ctx context.Context, limit int) ([]string, error)
 	getMostRecentlyUsedBrewingMethodNames(ctx context.Context, limit int) ([]string, error)
 	getMostRecentlyUsedCoffeeGrinderNames(ctx context.Context, limit int) ([]string, error)
 	getMostRecentlyUsedCoffeeWeights(ctx context.Context, brewingMethodName string, coffeeGrinderName string, limit int) ([]int, error)

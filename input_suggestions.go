@@ -7,10 +7,19 @@ import (
 )
 
 // limit determines the number of strings in the returned slice.
-func (s *SQLiteDB) getMostRecentBrewedCoffeeNames(ctx context.Context, limit int) ([]string, error) {
+// The first suggestions are the most recently brewed coffees.
+// The last suggestion is the most recently purchased coffee (The last two if limit > 5).
+func (s *SQLiteDB) getCoffeeNameSuggestions(ctx context.Context, limit int) ([]string, error) {
+	brewedLimit := limit - 1
+	purchasedLimit := 1
+	if limit > 5 {
+		brewedLimit--
+		purchasedLimit++
+	}
+
 	var names []string
 	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		rows, err := tx.QueryContext(ctx, `
+		bRows, err := tx.QueryContext(ctx, `
 			SELECT DISTINCT c.name 
 			FROM brewings as b
 			INNER JOIN coffees as c
@@ -18,30 +27,60 @@ func (s *SQLiteDB) getMostRecentBrewedCoffeeNames(ctx context.Context, limit int
 			ORDER BY b.id DESC
 			LIMIT :limit
 		`,
-			sql.Named("limit", limit),
+			sql.Named("limit", brewedLimit),
 		)
 		if err != nil {
-			return fmt.Errorf("buna: input_suggestions: failed to retrieve coffee name rows: %w", err)
+			return fmt.Errorf("buna: input_suggestions: failed to retrieve recently brewed coffee names: %w", err)
 		}
-		defer rows.Close()
+		defer bRows.Close()
 
-		for rows.Next() {
+		for bRows.Next() {
 			var name string
-			if err := rows.Scan(&name); err != nil {
-				return fmt.Errorf("buna: input_suggestions: failed to scan row: %w", err)
+			if err := bRows.Scan(&name); err != nil {
+				return fmt.Errorf("buna: input_suggestions: failed to scan bRow: %w", err)
 			}
 
 			names = append(names, name)
 		}
 
-		if err := rows.Err(); err != nil {
-			return fmt.Errorf("buna: input_suggestions: failed to scan last row: %w", err)
+		if err := bRows.Err(); err != nil {
+			return fmt.Errorf("buna: input_suggestions: failed to scan last bRow: %w", err)
+		}
+
+		pRows, err := tx.QueryContext(ctx, `
+			SELECT DISTINCT c.name 
+			FROM purchases as p
+			INNER JOIN coffees as c
+				ON p.coffee_id = c.id
+			ORDER BY p.id DESC
+			LIMIT :limit
+		`,
+			sql.Named("limit", purchasedLimit),
+		)
+		if err != nil {
+			return fmt.Errorf("buna: input_suggestions: failed to retrieve recently purchased coffee names: %w", err)
+		}
+		defer pRows.Close()
+
+		for pRows.Next() {
+			var name string
+			if err := pRows.Scan(&name); err != nil {
+				return fmt.Errorf("buna: input_suggestions: failed to scan pRow: %w", err)
+			}
+
+			names = append(names, name)
+		}
+
+		if err := pRows.Err(); err != nil {
+			return fmt.Errorf("buna: input_suggestions: failed to scan last pRow: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("buna: input_suggestions: getMostRecentBrewedCoffeeNames transaction failed: %w", err)
+		return nil, fmt.Errorf("buna: input_suggestions: getCoffeeNameSuggestions transaction failed: %w", err)
 	}
+
+	names = removeStrDuplicates(names)
 
 	return names, nil
 }
@@ -256,4 +295,18 @@ func (s *SQLiteDB) getRoastersByCoffeeName(ctx context.Context, name string, lim
 	}
 
 	return roasters, nil
+}
+
+func removeStrDuplicates(strings []string) []string {
+	keys := make(map[string]bool)
+	var res []string
+
+	for _, entry := range strings {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			res = append(res, entry)
+		}
+	}
+
+	return res
 }
