@@ -72,7 +72,11 @@ func addBrewing(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	roastDate, quit := getDateInput(quitStr, true, "Enter roast ?: ", []date{})
+	roastDateSuggestion, err := db.getLastCoffeeRoastDate(ctx, coffeeName)
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get roast date suggestions: %w", err)
+	}
+	roastDate, quit := getDateInput(quitStr, true, "Enter roast ?: ", []date{roastDateSuggestion})
 	if quit {
 		fmt.Println(quitMsg)
 		return nil

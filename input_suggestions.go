@@ -85,6 +85,36 @@ func (s *SQLiteDB) getCoffeeNameSuggestions(ctx context.Context, limit int) ([]s
 	return names, nil
 }
 
+func (s *SQLiteDB) getLastCoffeeRoastDate(ctx context.Context, coffeeName string) (date, error) {
+	var dateStr string
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		if err := tx.QueryRowContext(ctx, `
+			SELECT p.roast_date
+			FROM purchases as p
+			INNER JOIN coffees as c
+				ON p.coffee_id = c.id
+			WHERE c.name = :coffeeName
+			ORDER BY p.id DESC
+			LIMIT 1
+		`,
+			sql.Named("coffeeName", coffeeName),
+		).Scan(&dateStr); err != nil {
+			return fmt.Errorf("buna: input_suggestions: failed to retrieve roast date: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return date{}, fmt.Errorf("buna: input_suggestions: getLastCoffeeRoastDate transaction failed: %w", err)
+	}
+
+	roastDate, err := createDateFromDateString(dateStr)
+	if err != nil {
+		return date{}, fmt.Errorf("buna: input_suggestions: failed to convert dateStr into date: %w", err)
+	}
+
+	return roastDate, nil
+}
+
 // limit determines the number of strings in the returned slice.
 func (s *SQLiteDB) getMostRecentlyUsedBrewingMethodNames(ctx context.Context, limit int) ([]string, error) {
 	var names []string

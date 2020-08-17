@@ -2,6 +2,7 @@ package buna
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -346,6 +347,21 @@ func createDateString(date date) string {
 	sb.WriteString(dayStr)
 
 	return sb.String()
+}
+
+func createDateFromDateString(dateStr string) (date, error) {
+	dateStrSlice := strings.Split(dateStr, "-")
+
+	dateIntSlice := make([]int, 3)
+	var err error
+	for i := 0; i < 3; i++ {
+		dateIntSlice[i], err = strconv.Atoi(dateStrSlice[i])
+		if err != nil {
+			return date{}, errors.New("buna: input_util: dateStr is non numeric")
+		}
+	}
+
+	return date{year: dateIntSlice[0], month: dateIntSlice[1], day: dateIntSlice[2]}, nil
 }
 
 // Returns a 'true' boolean if quit.
