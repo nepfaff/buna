@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"reflect"
 )
 
 // limit determines the number of strings in the returned slice.
@@ -86,9 +87,12 @@ func (s *SQLiteDB) getCoffeeNameSuggestions(ctx context.Context, limit int) ([]s
 }
 
 func (s *SQLiteDB) getLastCoffeeRoastDate(ctx context.Context, coffeeName string) (date, error) {
-	var dateStr string
+	var (
+		dateStr string
+		isEmpty bool
+	)
 	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		if err := tx.QueryRowContext(ctx, `
+		rows, err := tx.QueryContext(ctx, `
 			SELECT p.roast_date
 			FROM purchases as p
 			INNER JOIN coffees as c
@@ -98,13 +102,41 @@ func (s *SQLiteDB) getLastCoffeeRoastDate(ctx context.Context, coffeeName string
 			LIMIT 1
 		`,
 			sql.Named("coffeeName", coffeeName),
-		).Scan(&dateStr); err != nil {
+		)
+		if err != nil {
 			return fmt.Errorf("buna: input_suggestions: failed to retrieve roast date: %w", err)
+		}
+		defer rows.Close()
+
+		// Check if no rows available
+		if ok := rows.Next(); !ok {
+			isEmpty = true
+			return nil
+		}
+
+		var val interface{}
+		if err := rows.Scan(&val); err != nil {
+			return fmt.Errorf("buna: input_suggestions: failed to scan row: %w", err)
+		}
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("buna: input_suggestions: failed to scan last row: %w", err)
+		}
+
+		// Deal with possible NULL values
+		if v := reflect.ValueOf(val); v.Kind() == reflect.String {
+			dateStr = val.(string)
+		} else {
+			isEmpty = true
+			return nil
 		}
 
 		return nil
 	}); err != nil {
 		return date{}, fmt.Errorf("buna: input_suggestions: getLastCoffeeRoastDate transaction failed: %w", err)
+	}
+
+	if isEmpty {
+		return date{}, nil
 	}
 
 	roastDate, err := createDateFromDateString(dateStr)
