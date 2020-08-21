@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/jedib0t/go-pretty/table"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type selection struct {
@@ -62,11 +63,17 @@ var (
 )
 
 func Run(ctx context.Context, db DB) error {
-	displayOptions()
+	if err := displayOptions(); err != nil {
+		return fmt.Errorf("buna: ui: failed to display main options: %w", err)
+	}
 
 	var selection selection
+	var err error
 	for {
-		selection = getSelection()
+		selection, err = getSelection()
+		if err != nil {
+			return fmt.Errorf("buna: ui: failed to get main selection: %w", err)
+		}
 
 		// Check for Quit option
 		if selection.category == control && selection.index == 0 {
@@ -82,7 +89,7 @@ func Run(ctx context.Context, db DB) error {
 	return nil
 }
 
-func displayOptions() {
+func displayOptions() error {
 	t := table.NewWriter()
 
 	var header table.Row
@@ -104,14 +111,26 @@ func displayOptions() {
 	}
 	t.AppendRows(rows)
 
+	terminalWidth, _, err := terminal.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		return fmt.Errorf("buna: ui: failed to get terminal width: %w", err)
+	}
+	t.SetAllowedRowLength(terminalWidth)
+
 	t.SetOutputMirror(os.Stdout)
 	t.Render()
+
+	return nil
 }
 
-func getSelection() selection {
-	retry := func() {
+func getSelection() (selection, error) {
+	retry := func() error {
 		fmt.Println("Invalid option. The following options are available:")
-		displayOptions()
+		if err := displayOptions(); err != nil {
+			return fmt.Errorf("buna: ui: failed to display main options: %w", err)
+		}
+
+		return nil
 	}
 
 	for {
@@ -121,31 +140,39 @@ func getSelection() selection {
 		input = strings.ToUpper(input)
 
 		if len(input) != 2 {
-			retry()
+			if err := retry(); err != nil {
+				return selection{}, fmt.Errorf("buna: ui: failed to display main options (retry): %w", err)
+			}
 			continue
 		}
 
 		cat, err := getCategoryByString(input[:1])
 		if err != nil {
-			retry()
+			if err := retry(); err != nil {
+				return selection{}, fmt.Errorf("buna: ui: failed to display main options (retry): %w", err)
+			}
 			continue
 		}
 
 		idx, err := strconv.Atoi(input[1:])
 		if err != nil {
-			retry()
+			if err := retry(); err != nil {
+				return selection{}, fmt.Errorf("buna: ui: failed to display main options (retry): %w", err)
+			}
 			continue
 		}
 
 		if _, ok := options[cat][idx]; !ok {
-			retry()
+			if err := retry(); err != nil {
+				return selection{}, fmt.Errorf("buna: ui: failed to display main options (retry): %w", err)
+			}
 			continue
 		}
 
 		return selection{
 			category: cat,
 			index:    idx,
-		}
+		}, nil
 	}
 }
 
@@ -197,7 +224,9 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 			// Special case
 			// Already handled in Run()
 		case 1:
-			displayOptions()
+			if err := displayOptions(); err != nil {
+				return fmt.Errorf("buna: ui: failed to display main options: %w", err)
+			}
 		}
 	default:
 		return errors.New("buna: ui: invalid category")

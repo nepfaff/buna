@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/jedib0t/go-pretty/table"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type date struct {
@@ -365,10 +366,14 @@ func createDateFromDateString(dateStr string) (date, error) {
 }
 
 // Returns a 'true' boolean if quit.
-func getIntSelection(options map[int]string, quitStr string) (int, bool) {
-	retry := func() {
+func getIntSelection(options map[int]string, quitStr string) (int, bool, error) {
+	retry := func() error {
 		fmt.Println("Invalid option. The following options are available:")
-		displayIntOptions(options)
+		if err := displayIntOptions(options); err != nil {
+			return fmt.Errorf("buna: input_util: failed to display int options: %w", err)
+		}
+
+		return nil
 	}
 
 	inputLen := 1
@@ -382,30 +387,36 @@ func getIntSelection(options map[int]string, quitStr string) (int, bool) {
 		fmt.Scanln(&input)
 
 		if input == quitStr {
-			return 0, true
+			return 0, true, nil
 		}
 
 		if len(input) > inputLen {
-			retry()
+			if err := retry(); err != nil {
+				return 0, false, fmt.Errorf("buna: ui: failed to display int options (retry): %w", err)
+			}
 			continue
 		}
 
 		selection, err := strconv.Atoi(input)
 		if err != nil {
-			retry()
+			if err := retry(); err != nil {
+				return 0, false, fmt.Errorf("buna: ui: failed to display int options (retry): %w", err)
+			}
 			continue
 		}
 
 		if _, ok := options[selection]; !ok {
-			retry()
+			if err := retry(); err != nil {
+				return 0, false, fmt.Errorf("buna: ui: failed to display int options (retry): %w", err)
+			}
 			continue
 		}
 
-		return selection, false
+		return selection, false, nil
 	}
 }
 
-func displayIntOptions(options map[int]string) {
+func displayIntOptions(options map[int]string) error {
 	t := table.NewWriter()
 
 	t.AppendHeader(table.Row{"Option", "Description"})
@@ -416,6 +427,14 @@ func displayIntOptions(options map[int]string) {
 	}
 	t.AppendRows(rows)
 
+	terminalWidth, _, err := terminal.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		return fmt.Errorf("buna: coffee: failed to get terminal width: %w", err)
+	}
+	t.SetAllowedRowLength(terminalWidth)
+
 	t.SetOutputMirror(os.Stdout)
 	t.Render()
+
+	return nil
 }

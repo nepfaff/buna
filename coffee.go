@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/jedib0t/go-pretty/table"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type coffee struct {
@@ -129,9 +130,14 @@ func retrieveCoffee(ctx context.Context, db DB) error {
 	}
 
 	fmt.Println("Retrieving coffee (Enter # to quit):")
-	displayIntOptions(options)
+	if err := displayIntOptions(options); err != nil {
+		return fmt.Errorf("buna: brewing: failed to display int options: %w", err)
+	}
 
-	selection, quit := getIntSelection(options, quitStr)
+	selection, quit, err := getIntSelection(options, quitStr)
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get int selection: %w", err)
+	}
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -194,6 +200,12 @@ func displayCoffeesByLastAdded(ctx context.Context, db DB) error {
 	}
 
 	t.AppendRows(rows)
+
+	terminalWidth, _, err := terminal.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		return fmt.Errorf("buna: coffee: failed to get terminal width: %w", err)
+	}
+	t.SetAllowedRowLength(terminalWidth)
 
 	t.SetOutputMirror(os.Stdout)
 	t.Render()
