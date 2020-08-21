@@ -3,8 +3,14 @@ package buna
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"os"
+	"strings"
 	"time"
+
+	"github.com/jedib0t/go-pretty/table"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type brewing struct {
@@ -303,5 +309,141 @@ func (s *SQLiteDB) insertBrewing(ctx context.Context, brewing brewing) error {
 	}); err != nil {
 		return fmt.Errorf("buna: brewing: transaction failed: %w", err)
 	}
+	return nil
+}
+
+func retrieveBrewing(ctx context.Context, db DB) error {
+	options := map[int]string{
+		0: "Retrieve brewing suggestions",
+		1: "Retrieve brewing ordered by last added",
+		2: "Retrieve brewing ordered by rating",
+	}
+
+	fmt.Println("Retrieving brewing (Enter # to quit):")
+	if err := displayIntOptions(options); err != nil {
+		return fmt.Errorf("buna: brewing: failed to display int options: %w", err)
+	}
+
+	selection, quit, err := getIntSelection(options, quitStr)
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get int selection: %w", err)
+	}
+	if quit {
+		fmt.Println(quitMsg)
+		return nil
+	}
+
+	if err := runRetrieveBrewingSelection(ctx, selection, db); err != nil {
+		return fmt.Errorf("buna: brewing: failed to run the retrieve selection: %w", err)
+	}
+
+	return nil
+}
+
+func runRetrieveBrewingSelection(ctx context.Context, selection int, db DB) error {
+	switch selection {
+	case 0:
+	case 1:
+		if err := displayBrewingsByLastAdded(ctx, db); err != nil {
+			return fmt.Errorf("buna: brewing: failed to display brewings by last added: %w", err)
+		}
+	case 2:
+	case 3:
+	case 4:
+	case 5:
+	case 6:
+	case 7:
+	default:
+		return errors.New("buna: brewing: invalid retrieve selection")
+	}
+	return nil
+}
+
+// Promts user for an optional limit and whether the brewing notes should be included.
+func displayBrewingsByLastAdded(ctx context.Context, db DB) error {
+	const maxDisplayAmount = 100
+
+	fmt.Println("Displaying brewings by last added (Enter # to quit):")
+	fmt.Print("Enter a limit for the number of brewings to display: ")
+	limit, quit := validateIntInput(quitStr, true, 1, maxDisplayAmount, []int{})
+	if quit {
+		fmt.Println(quitMsg)
+		return nil
+	}
+
+	fmt.Print("Show brewing notes (true or false): ")
+	showNotes, quit := validateBoolInput(quitStr, true)
+	if quit {
+		fmt.Println(quitMsg)
+		return nil
+	}
+
+	if limit == 0 {
+		limit = maxDisplayAmount
+	}
+
+	brewings, err := db.getBrewingsByLastAdded(ctx, limit)
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get coffees by last added: %w", err)
+	}
+
+	t := table.NewWriter()
+
+	t.AppendHeader(table.Row{
+		"Date",
+		"Coffee\nName",
+		"Method",
+		"Grind\nSetting",
+		"Time\n(s)",
+		"Coffee\nWeight\n(g)",
+		"Water\nWeight\n(g)",
+		"Rating",
+		"Recommended\nGrind\nAdjustment",
+		"Recommended\nCoffee\nAdjustment (g)",
+		"V60\nFilter\nType",
+		"Grinder",
+		"Coffee\nRoaster",
+		"Roast Date",
+	})
+
+	for _, brewing := range brewings {
+		row := table.Row{
+			brewing.date,
+			brewing.coffeeName,
+			brewing.brewingMethodName,
+			brewing.grindSetting,
+			brewing.totalBrewingTimeSec,
+			brewing.coffeeGrams,
+			brewing.waterGrams,
+			brewing.rating,
+			brewing.recommendedGrindSettingAdjustment,
+			brewing.recommendedCoffeeWeightAdjustmentGrams,
+			brewing.v60FilterType,
+			brewing.grinderName,
+			brewing.coffeeRoaster,
+			brewing.roastDate,
+		}
+
+		t.AppendRow(row)
+
+		if showNotes {
+			// Increase readability by splitting note into separate lines
+			notes := "\n" + strings.ReplaceAll(brewing.notes, ".", ".\n")
+
+			t.AppendRow(table.Row{"\nNotes:", notes})
+		}
+
+		t.AppendSeparator()
+	}
+
+	terminalWidth, _, err := terminal.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get terminal width: %w", err)
+	}
+	t.SetAllowedRowLength(terminalWidth)
+
+	t.SetOutputMirror(os.Stdout)
+	t.Render()
+
 	return nil
 }

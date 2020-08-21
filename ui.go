@@ -209,6 +209,9 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 	case retrieve:
 		switch selection.index {
 		case 0:
+			if err := retrieveBrewing(ctx, db); err != nil {
+				return fmt.Errorf("buna: ui: failed to retrieve brewing: %w", err)
+			}
 		case 1:
 		case 2:
 		case 3:

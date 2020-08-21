@@ -170,6 +170,112 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 	return nil
 }
 
+func (s *SQLiteDB) getBrewingsByLastAdded(ctx context.Context, limit int) ([]brewing, error) {
+	brewings := make([]brewing, 0, limit)
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		rows, err := tx.QueryContext(ctx, `
+			SELECT 	b.date,
+					c.name,
+					c.roaster,
+					m.name,
+					b.roast_date,
+					g.name,
+					b.grind_setting,
+					b.total_brewing_time_sec,
+					b.coffee_grams,
+					b.water_grams,
+					b.v60_filter_type,
+					b.rating,
+					b.recommended_grind_setting_adjustment,
+					b.recommended_coffee_weight_adjustment_grams,
+					b.notes
+			FROM brewings as b
+			INNER JOIN coffees as c
+				ON c.id = b.coffee_id
+			INNER JOIN brewing_methods as m
+				ON m.id = b.method_id
+			INNER JOIN grinders as g
+				ON g.id = b.grinder_id
+			ORDER BY b.id DESC
+			LIMIT :limit
+		`,
+			sql.Named("limit", limit),
+		)
+		if err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to retrieve brewing rows: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var brewing brewing
+			var roastDate, v60FilterType, rating, recommendedGrindSettingAdjustment, recommendedCoffeeWeightAdjustmentGrams, notes interface{}
+			if err := rows.Scan(
+				&brewing.date,
+				&brewing.coffeeName,
+				&brewing.coffeeRoaster,
+				&brewing.brewingMethodName,
+				&roastDate,
+				&brewing.grinderName,
+				&brewing.grindSetting,
+				&brewing.totalBrewingTimeSec,
+				&brewing.coffeeGrams,
+				&brewing.waterGrams,
+				&v60FilterType,
+				&rating,
+				&recommendedGrindSettingAdjustment,
+				&recommendedCoffeeWeightAdjustmentGrams,
+				&notes,
+			); err != nil {
+				return fmt.Errorf("buna: sqlite_db: failed to scan row: %w", err)
+			}
+
+			// Deal with possible NULL values
+			if v := reflect.ValueOf(roastDate); v.Kind() == reflect.String {
+				brewing.roastDate = roastDate.(string)
+			} else {
+				brewing.roastDate = "Unknown"
+			}
+			if v := reflect.ValueOf(v60FilterType); v.Kind() == reflect.String {
+				brewing.v60FilterType = v60FilterType.(string)
+			} else {
+				brewing.v60FilterType = "None"
+			}
+			if v := reflect.ValueOf(rating); v.Kind() == reflect.Int64 {
+				brewing.rating = int(rating.(int64))
+			} else {
+				brewing.rating = 0
+			}
+			if v := reflect.ValueOf(recommendedGrindSettingAdjustment); v.Kind() == reflect.String {
+				brewing.recommendedGrindSettingAdjustment = recommendedGrindSettingAdjustment.(string)
+			} else {
+				brewing.recommendedGrindSettingAdjustment = "None"
+			}
+			if v := reflect.ValueOf(recommendedCoffeeWeightAdjustmentGrams); v.Kind() == reflect.Int64 {
+				brewing.recommendedCoffeeWeightAdjustmentGrams = int(recommendedCoffeeWeightAdjustmentGrams.(int64))
+			} else {
+				brewing.recommendedCoffeeWeightAdjustmentGrams = 0
+			}
+			if v := reflect.ValueOf(notes); v.Kind() == reflect.String {
+				brewing.notes = notes.(string)
+			} else {
+				brewing.notes = "None"
+			}
+
+			brewings = append(brewings, brewing)
+		}
+
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to scan last row: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("buna: sqlite_db: displayBrewingsByLastAdded transaction failed: %w", err)
+	}
+
+	return brewings, nil
+}
+
 func (s *SQLiteDB) getCoffeesByLastAdded(ctx context.Context, limit int) ([]coffee, error) {
 	coffees := make([]coffee, 0, limit)
 	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
@@ -182,7 +288,7 @@ func (s *SQLiteDB) getCoffeesByLastAdded(ctx context.Context, limit int) ([]coff
 			sql.Named("limit", limit),
 		)
 		if err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to retrieve brewing method name rows: %w", err)
+			return fmt.Errorf("buna: sqlite_db: failed to retrieve coffee rows: %w", err)
 		}
 		defer rows.Close()
 
