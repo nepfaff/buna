@@ -13,9 +13,6 @@ type grinder struct {
 }
 
 func addGrinder(ctx context.Context, db DB) error {
-	quitStr := "#"
-	quitMsg := "Quit"
-
 	fmt.Println("Adding new coffee grinder (Enter # to quit):")
 	fmt.Print("Enter grinder name: ")
 	name, quit := validateStrInput(quitStr, false, nil, nil)

@@ -26,9 +26,6 @@ type brewing struct {
 }
 
 func addBrewing(ctx context.Context, db DB) error {
-	quitStr := "#"
-	quitMsg := "Quit"
-
 	fmt.Println("Adding new coffee brewing (Enter # to quit):")
 	brewingDate, quit := getDateInput(quitStr, false, "Enter brewing ?: ", []date{
 		{year: time.Now().Year(), month: int(time.Now().Month()), day: time.Now().Day()},

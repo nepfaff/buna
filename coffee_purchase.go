@@ -15,9 +15,6 @@ type coffeePurchase struct {
 }
 
 func addCoffeePurchase(ctx context.Context, db DB) error {
-	quitStr := "#"
-	quitMsg := "Quit"
-
 	fmt.Println("Adding new coffee purchase (Enter # to quit):")
 	fmt.Print("Enter coffee name: ")
 	name, quit := validateStrInput(quitStr, false, nil, nil)

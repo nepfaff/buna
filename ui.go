@@ -26,6 +26,11 @@ const (
 	control
 )
 
+const (
+	quitStr = "#"
+	quitMsg = "Quit"
+)
+
 var (
 	categoryRefs = map[category]string{
 		create:   "A",

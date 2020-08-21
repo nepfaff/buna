@@ -10,11 +10,6 @@ import (
 	"github.com/jedib0t/go-pretty/table"
 )
 
-const (
-	quitStr = "#"
-	quitMsg = "Quit"
-)
-
 type coffee struct {
 	name    string
 	roaster string
