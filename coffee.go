@@ -128,9 +128,9 @@ func retrieveCoffee(ctx context.Context, db DB) error {
 		2: "Retrieve coffees ordered alphabetically",
 		3: "Retrieve coffees by origin",
 		4: "Retrieve coffees by roaster",
-		5: "Retrieve coffees ordered alphabetically",
-		6: "Retrieve coffees by processing method",
-		7: "Retrieve decaf coffees ordered by last added",
+		5: "Retrieve coffees by processing method",
+		6: "Retrieve decaf coffees ordered by last added",
+		7: "Retrieve decaf coffees ordered alphabetically",
 	}
 
 	fmt.Println("Retrieving coffee (Enter # to quit):")
