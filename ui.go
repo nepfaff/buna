@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -57,10 +59,34 @@ var (
 		},
 		control: map[int]string{
 			0: "Quit",
-			1: "Display options",
+			1: "Clear screen",
+			2: "Display options",
 		},
 	}
 )
+
+// Used for clearing the terminal screen
+var clear map[string]func() error
+
+func init() {
+	clear = make(map[string]func() error)
+	clear["linux"] = func() error {
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("buna: ui: failed to run linux clear terminal command: %w", err)
+		}
+		return nil
+	}
+	clear["windows"] = func() error {
+		cmd := exec.Command("cmd", "/c", "cls")
+		cmd.Stdout = os.Stdout
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("buna: ui: failed to run windows clear terminal command: %w", err)
+		}
+		return nil
+	}
+}
 
 func Run(ctx context.Context, db DB) error {
 	if err := displayOptions(); err != nil {
@@ -227,6 +253,10 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 			// Special case
 			// Already handled in Run()
 		case 1:
+			if err := clearTerminalScreen(); err != nil {
+				return fmt.Errorf("buna: ui: failed to clear terminal screen: %w", err)
+			}
+		case 2:
 			if err := displayOptions(); err != nil {
 				return fmt.Errorf("buna: ui: failed to display main options: %w", err)
 			}
@@ -234,6 +264,19 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 	default:
 		return errors.New("buna: ui: invalid category")
 	}
+	return nil
+}
+
+func clearTerminalScreen() error {
+	clearFunc, ok := clear[runtime.GOOS]
+	if ok {
+		if err := clearFunc(); err != nil {
+			return fmt.Errorf("buna: ui: failed to clear terminal screen: %w", err)
+		}
+	} else {
+		return errors.New("buna: ui: unsupported operating system for clearing terminal screen")
+	}
+
 	return nil
 }
 
