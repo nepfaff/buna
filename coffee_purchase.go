@@ -16,18 +16,39 @@ type coffeePurchase struct {
 
 func addCoffeePurchase(ctx context.Context, db DB) error {
 	fmt.Println("Adding new coffee purchase (Enter # to quit):")
-	fmt.Print("Enter coffee name: ")
-	name, quit := validateStrInput(quitStr, false, nil, nil)
+
+	fmt.Print("Do you want to create a new coffee first? (true or false): ")
+	createCoffee, quit := validateBoolInput(quitStr, true)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter roaster/producer name: ")
-	roaster, quit := validateStrInput(quitStr, false, nil, nil)
-	if quit {
-		fmt.Println(quitMsg)
-		return nil
+	var name, roaster string
+	if createCoffee {
+		addedCoffee, err := addCoffee(ctx, db)
+		if err != nil {
+			return fmt.Errorf("buna: coffee_purchases: failed to create new coffee: %w", err)
+		}
+
+		name = addedCoffee.name
+		roaster = addedCoffee.roaster
+
+		fmt.Println("\nAdding new coffee purchase for the just added coffee (Enter # to quit):")
+	} else {
+		fmt.Print("Enter coffee name: ")
+		name, quit = validateStrInput(quitStr, false, nil, nil)
+		if quit {
+			fmt.Println(quitMsg)
+			return nil
+		}
+
+		fmt.Print("Enter roaster/producer name: ")
+		roaster, quit = validateStrInput(quitStr, false, nil, nil)
+		if quit {
+			fmt.Println(quitMsg)
+			return nil
+		}
 	}
 
 	boughtDate, quit := getDateInput(quitStr, false, "Enter ? of purchase or ? of arrival if bought online: ", []date{

@@ -20,51 +20,52 @@ type coffee struct {
 	decaf   bool
 }
 
-func addCoffee(ctx context.Context, db DB) error {
+// Returns the added coffee
+func addCoffee(ctx context.Context, db DB) (coffee, error) {
 	fmt.Println("Adding new coffee (Enter # to quit):")
 	fmt.Print("Enter coffee name: ")
 	name, quit := validateStrInput(quitStr, false, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
-		return nil
+		return coffee{}, nil
 	}
 
 	fmt.Print("Enter roaster/producer name: ")
 	roaster, quit := validateStrInput(quitStr, false, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
-		return nil
+		return coffee{}, nil
 	}
 
 	fmt.Print("Enter origin/region (Format: Region, Country): ")
 	region, quit := validateStrInput(quitStr, true, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
-		return nil
+		return coffee{}, nil
 	}
 
 	fmt.Print("Enter variety (Format: Variety 1, Variety 2, ...): ")
 	variety, quit := validateStrInput(quitStr, true, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
-		return nil
+		return coffee{}, nil
 	}
 
 	fmt.Print("Enter processing method: ")
 	method, quit := validateStrInput(quitStr, true, nil, nil)
 	if quit {
 		fmt.Println(quitMsg)
-		return nil
+		return coffee{}, nil
 	}
 
 	fmt.Print("Is decaf (true or false): ")
 	decaf, quit := validateBoolInput(quitStr, true)
 	if quit {
 		fmt.Println(quitMsg)
-		return nil
+		return coffee{}, nil
 	}
 
-	coffee := coffee{
+	newCoffee := coffee{
 		name:    name,
 		roaster: roaster,
 		region:  region,
@@ -73,12 +74,12 @@ func addCoffee(ctx context.Context, db DB) error {
 		decaf:   decaf,
 	}
 
-	if err := db.insertCoffee(ctx, coffee); err != nil {
-		return fmt.Errorf("buna: coffee: failed to insert coffee: %w", err)
+	if err := db.insertCoffee(ctx, newCoffee); err != nil {
+		return coffee{}, fmt.Errorf("buna: coffee: failed to insert coffee: %w", err)
 	}
 
 	fmt.Println("Added coffee successfully")
-	return nil
+	return newCoffee, nil
 }
 
 func (s *SQLiteDB) insertCoffee(ctx context.Context, coffee coffee) error {

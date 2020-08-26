@@ -220,7 +220,7 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 				return fmt.Errorf("buna: ui: failed to create new coffee purchase: %w", err)
 			}
 		case 3:
-			if err := addCoffee(ctx, db); err != nil {
+			if _, err := addCoffee(ctx, db); err != nil {
 				return fmt.Errorf("buna: ui: failed to create new coffee: %w", err)
 			}
 		case 4:
