@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -361,7 +362,8 @@ func runRetrieveBrewingSelection(ctx context.Context, selection int, db DB) erro
 
 // Promts user for an optional limit and whether the brewing notes should be included.
 func displayBrewingsByLastAdded(ctx context.Context, db DB) error {
-	const maxDisplayAmount = 100
+	const defaultDisplayAmount = 15
+	const maxDisplayAmount = 50
 
 	fmt.Println("Displaying brewings by last added (Enter # to quit):")
 	fmt.Print("Enter a limit for the number of brewings to display: ")
@@ -379,7 +381,11 @@ func displayBrewingsByLastAdded(ctx context.Context, db DB) error {
 	}
 
 	if limit == 0 {
-		limit = maxDisplayAmount
+		if showNotes {
+			limit = defaultDisplayAmount / 3
+		} else {
+			limit = defaultDisplayAmount
+		}
 	}
 
 	brewings, err := db.getBrewingsByLastAdded(ctx, limit)
@@ -407,6 +413,8 @@ func displayBrewingsByLastAdded(ctx context.Context, db DB) error {
 	})
 
 	for _, brewing := range brewings {
+		grinder := strings.ReplaceAll(brewing.grinderName, "(", "\n(")
+
 		row := table.Row{
 			brewing.date,
 			brewing.coffeeName,
@@ -419,7 +427,7 @@ func displayBrewingsByLastAdded(ctx context.Context, db DB) error {
 			brewing.recommendedGrindSettingAdjustment,
 			brewing.recommendedCoffeeWeightAdjustmentGrams,
 			brewing.v60FilterType,
-			brewing.grinderName,
+			grinder,
 			brewing.coffeeRoaster,
 			brewing.roastDate,
 		}
@@ -427,8 +435,8 @@ func displayBrewingsByLastAdded(ctx context.Context, db DB) error {
 		t.AppendRow(row)
 
 		if showNotes {
-			// Increase readability by splitting note into separate lines
-			notes := "\n" + strings.ReplaceAll(brewing.notes, ".", ".\n")
+			re := regexp.MustCompile(`([.?!:;]) ([A-Z])`)
+			notes := "\n" + string(re.ReplaceAll([]byte(brewing.notes), []byte("${1}\n${2}")))
 
 			t.AppendRow(table.Row{"\nNotes:", notes})
 		}

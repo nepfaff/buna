@@ -171,7 +171,8 @@ func runRetrieveCoffeeSelection(ctx context.Context, selection int, db DB) error
 
 // Promts user for an optional limit.
 func displayCoffeesByLastAdded(ctx context.Context, db DB) error {
-	const maxDisplayAmount = 100
+	const defaultDisplayAmount = 15
+	const maxDisplayAmount = 50
 
 	fmt.Println("Displaying coffees by last added (Enter # to quit):")
 	fmt.Print("Enter a limit for the number of coffees to display: ")
@@ -182,7 +183,7 @@ func displayCoffeesByLastAdded(ctx context.Context, db DB) error {
 	}
 
 	if limit == 0 {
-		limit = maxDisplayAmount
+		limit = defaultDisplayAmount
 	}
 
 	coffees, err := db.getCoffeesByLastAdded(ctx, limit)
