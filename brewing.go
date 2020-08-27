@@ -43,133 +43,106 @@ func addBrewing(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	fmt.Print("Enter coffee name: ")
-	coffeeSuggestions, err := db.getCoffeeNameSuggestions(ctx, 5)
+	coffeeName, quit, err := getCoffeeNameWithSuggestions(ctx, db, quitStr)
 	if err != nil {
-		return fmt.Errorf("buna: brewing: failed to get coffee suggestions: %w", err)
+		return fmt.Errorf("buna: brewing: failed to get coffee name: %w", err)
 	}
-	coffeeName, quit := validateStrInput(quitStr, false, nil, coffeeSuggestions)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter roaster/producer name: ")
-	roasterSuggestions, err := db.getRoastersByCoffeeName(ctx, coffeeName, 5)
+	coffeeRoaster, quit, err := getCoffeeRoasterWithSuggestions(ctx, db, quitStr, coffeeName)
 	if err != nil {
-		return fmt.Errorf("buna: brewing: failed to get roaster suggestions: %w", err)
+		return fmt.Errorf("buna: brewing: failed to get coffee roaster: %w", err)
 	}
-	coffeeRoaster, quit := validateStrInput(quitStr, false, nil, roasterSuggestions)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter brewing method name: ")
-	brewingMethodSuggestions, err := db.getMostRecentlyUsedBrewingMethodNames(ctx, 5)
+	brewingMethodName, quit, err := getBrewingMethodNameWithSuggestions(ctx, db, quitStr)
 	if err != nil {
-		return fmt.Errorf("buna: brewing: failed to get brewing method suggestions: %w", err)
+		return fmt.Errorf("buna: brewing: failed to get brewing method name: %w", err)
 	}
-	brewingMethodName, quit := validateStrInput(quitStr, false, nil, brewingMethodSuggestions)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	roastDateSuggestion, err := db.getLastCoffeeRoastDate(ctx, coffeeName)
+	roastDate, quit, err := getCoffeeRoastDateWithSuggestions(ctx, db, quitStr, coffeeName)
 	if err != nil {
-		return fmt.Errorf("buna: brewing: failed to get roast date suggestions: %w", err)
+		return fmt.Errorf("buna: brewing: failed to get coffee roast date: %w", err)
 	}
-	// Check if returned empty date
-	var roastDateSuggestions []date
-	if roastDateSuggestion.year != 0 {
-		roastDateSuggestions = append(roastDateSuggestions, roastDateSuggestion)
-	}
-	roastDate, quit := getDateInput(quitStr, true, "Enter roast ?: ", roastDateSuggestions)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter coffee grinder name: ")
-	grinderSuggestions, err := db.getMostRecentlyUsedCoffeeGrinderNames(ctx, 5)
+	grinderName, quit, err := getCoffeeGrinderNameWithSuggestions(ctx, db, quitStr)
 	if err != nil {
-		return fmt.Errorf("buna: brewing: failed to get coffee grinder suggestions: %w", err)
+		return fmt.Errorf("buna: brewing: failed to get coffee grinder name: %w", err)
 	}
-	grinderName, quit := validateStrInput(quitStr, false, nil, grinderSuggestions)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter grind setting: ")
-	// This assumes that every grinder has settings in the range 0 to 50
-	// An improvement would be to look up the possible grind settings using the grinder name
-	grindSetting, quit := validateIntInput(quitStr, false, 0, 50, nil)
+	grindSetting, quit := getCoffeeGrindSettingWithSuggestions(quitStr)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter the total brewing time in seconds: ")
-	totalBrewingTimeSec, quit := validateIntInput(quitStr, false, 10, 1800, nil)
+	totalBrewingTimeSec, quit := getTotalCoffeeBrewingTimeSecWithSuggestions(quitStr)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter the coffee weight used in grams: ")
-	coffeeWeightSuggestion, err := db.getMostRecentlyUsedCoffeeWeights(ctx, brewingMethodName, grinderName, 5)
+	coffeeGrams, quit, err := getCoffeeWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName)
 	if err != nil {
-		return fmt.Errorf("buna: brewing: failed to get coffee weight suggestions: %w", err)
+		return fmt.Errorf("buna: brewing: failed to get coffee weight: %w", err)
 	}
-	coffeeGrams, quit := validateIntInput(quitStr, false, 5, 100, coffeeWeightSuggestion)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter the water weight used in grams: ")
-	waterWeightSuggestion, err := db.getMostRecentlyUsedWaterWeights(ctx, brewingMethodName, grinderName, 5)
+	waterGrams, quit, err := getWaterWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName)
 	if err != nil {
-		return fmt.Errorf("buna: brewing: failed to get water weight suggestions: %w", err)
+		return fmt.Errorf("buna: brewing: failed to get water weight: %w", err)
 	}
-	waterGrams, quit := validateIntInput(quitStr, false, 20, 2000, waterWeightSuggestion)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter v60 filter type if applicable: ")
-	v60FilterType, quit := validateStrInput(quitStr, true, []string{"eu", "jp"}, nil)
+	v60FilterType, quit := getV60FilterTypeWithSuggestions(quitStr)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter your rating for this brew (1 <= x <= 10): ")
-	rating, quit := validateIntInput(quitStr, true, 1, 10, nil)
+	rating, quit := getCoffeeRatingWithSuggestions(quitStr)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter recommended grind setting adjustment: ")
-	recommendedGrindSettingAdjustment, quit := validateStrInput(quitStr, true, []string{"lower", "higher"}, nil)
+	recommendedGrindSettingAdjustment, quit := getRecommendedGrindSettingAdjustmentWithSuggestions(quitStr)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter recommended coffee weight adjustment in grams (-20 <= x <= 20): ")
-	recommendedCoffeeWeightAdjustmentGrams, quit := validateIntInput(quitStr, true, -20, 20, nil)
+	recommendedCoffeeWeightAdjustmentGrams, quit := getRecommendedCoffeeWeightAdjustmentGramsWithSuggestions(quitStr)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
 
-	fmt.Print("Enter some notes about this brewing: ")
-	notes, quit := validateStrInput(quitStr, true, nil, nil)
+	notes, quit := getBrewingNotesWithSuggestions(quitStr)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -476,12 +449,10 @@ func displayBrewingSuggestions(ctx context.Context, db DB) error {
 		limit = defaultDisplayAmount
 	}
 
-	fmt.Print("Enter brewing method name: ")
-	brewingMethodSuggestions, err := db.getMostRecentlyUsedBrewingMethodNames(ctx, 5)
+	brewingMethodName, quit, err := getBrewingMethodNameWithSuggestions(ctx, db, quitStr)
 	if err != nil {
-		return fmt.Errorf("buna: brewing: failed to get brewing method suggestions: %w", err)
+		return fmt.Errorf("buna: brewing: failed to get brewing method name: %w", err)
 	}
-	brewingMethodName, quit := validateStrInput(quitStr, false, nil, brewingMethodSuggestions)
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -489,8 +460,7 @@ func displayBrewingSuggestions(ctx context.Context, db DB) error {
 
 	var v60FilterType string
 	if brewingMethodName == "v60" || brewingMethodName == "V60" {
-		fmt.Print("Enter v60 filter type (skip if want to display all): ")
-		v60FilterType, quit = validateStrInput(quitStr, true, []string{"eu", "jp"}, nil)
+		v60FilterType, quit = getV60FilterTypeWithSuggestions(quitStr)
 		if quit {
 			fmt.Println(quitMsg)
 			return nil
@@ -509,58 +479,48 @@ func displayBrewingSuggestions(ctx context.Context, db DB) error {
 		coffeeGrams, waterGrams                int
 	)
 	if showOptionalOptions {
-		fmt.Print("Enter coffee name: ")
-		coffeeSuggestions, err := db.getCoffeeNameSuggestions(ctx, 5)
+		coffeeName, quit, err = getCoffeeNameWithSuggestions(ctx, db, quitStr)
 		if err != nil {
-			return fmt.Errorf("buna: brewing: failed to get coffee suggestions: %w", err)
+			return fmt.Errorf("buna: brewing: failed to get coffee name: %w", err)
 		}
-		coffeeName, quit = validateStrInput(quitStr, true, nil, coffeeSuggestions)
 		if quit {
 			fmt.Println(quitMsg)
 			return nil
 		}
 
 		if coffeeName != "" {
-			fmt.Print("Enter roaster/producer name: ")
-			roasterSuggestions, err := db.getRoastersByCoffeeName(ctx, coffeeName, 5)
+			coffeeRoaster, quit, err = getCoffeeRoasterWithSuggestions(ctx, db, quitStr, coffeeName)
 			if err != nil {
-				return fmt.Errorf("buna: brewing: failed to get roaster suggestions: %w", err)
+				return fmt.Errorf("buna: brewing: failed to get coffee roaster: %w", err)
 			}
-			coffeeRoaster, quit = validateStrInput(quitStr, true, nil, roasterSuggestions)
 			if quit {
 				fmt.Println(quitMsg)
 				return nil
 			}
 		}
 
-		fmt.Print("Enter coffee grinder name: ")
-		grinderSuggestions, err := db.getMostRecentlyUsedCoffeeGrinderNames(ctx, 5)
+		grinderName, quit, err = getCoffeeGrinderNameWithSuggestions(ctx, db, quitStr)
 		if err != nil {
-			return fmt.Errorf("buna: brewing: failed to get coffee grinder suggestions: %w", err)
+			return fmt.Errorf("buna: brewing: failed to get coffee grinder name: %w", err)
 		}
-		grinderName, quit = validateStrInput(quitStr, true, nil, grinderSuggestions)
 		if quit {
 			fmt.Println(quitMsg)
 			return nil
 		}
 
-		fmt.Print("Enter the coffee weight used in grams: ")
-		coffeeWeightSuggestion, err := db.getMostRecentlyUsedCoffeeWeights(ctx, brewingMethodName, grinderName, 5)
+		coffeeGrams, quit, err = getCoffeeWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName)
 		if err != nil {
-			return fmt.Errorf("buna: brewing: failed to get coffee weight suggestions: %w", err)
+			return fmt.Errorf("buna: brewing: failed to get coffee weight: %w", err)
 		}
-		coffeeGrams, quit = validateIntInput(quitStr, true, 5, 100, coffeeWeightSuggestion)
 		if quit {
 			fmt.Println(quitMsg)
 			return nil
 		}
 
-		fmt.Print("Enter the water weight used in grams: ")
-		waterWeightSuggestion, err := db.getMostRecentlyUsedWaterWeights(ctx, brewingMethodName, grinderName, 5)
+		waterGrams, quit, err = getWaterWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName)
 		if err != nil {
-			return fmt.Errorf("buna: brewing: failed to get water weight suggestions: %w", err)
+			return fmt.Errorf("buna: brewing: failed to get water weight: %w", err)
 		}
-		waterGrams, quit = validateIntInput(quitStr, true, 20, 2000, waterWeightSuggestion)
 		if quit {
 			fmt.Println(quitMsg)
 			return nil

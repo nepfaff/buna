@@ -2,6 +2,7 @@ package buna
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -323,6 +324,159 @@ func getDateInput(quitStr string, isOptional bool, inputMsg string, suggestions 
 		month: month,
 		day:   day,
 	}, false
+}
+
+// Returns brewingMethodName, didQuit, error
+func getBrewingMethodNameWithSuggestions(ctx context.Context, db DB, quitStr string) (string, bool, error) {
+	fmt.Print("Enter brewing method name: ")
+
+	brewingMethodSuggestions, err := db.getMostRecentlyUsedBrewingMethodNames(ctx, 5)
+	if err != nil {
+		return "", false, fmt.Errorf("buna: input_util: failed to get brewing method suggestions: %w", err)
+	}
+
+	brewingMethodName, quit := validateStrInput(quitStr, false, nil, brewingMethodSuggestions)
+
+	return brewingMethodName, quit, nil
+}
+
+// Returns notes, didQuit
+func getBrewingNotesWithSuggestions(quitStr string) (string, bool) {
+	fmt.Print("Enter some notes about this brewing: ")
+
+	return validateStrInput(quitStr, true, nil, nil)
+}
+
+// Returns grinderName, didQuit, error
+func getCoffeeGrinderNameWithSuggestions(ctx context.Context, db DB, quitStr string) (string, bool, error) {
+	fmt.Print("Enter coffee grinder name: ")
+
+	grinderSuggestions, err := db.getMostRecentlyUsedCoffeeGrinderNames(ctx, 3)
+	if err != nil {
+		return "", false, fmt.Errorf("buna: input_util: failed to get coffee grinder suggestions: %w", err)
+	}
+
+	grinderName, quit := validateStrInput(quitStr, false, nil, grinderSuggestions)
+
+	return grinderName, quit, nil
+}
+
+// Returns grindSetting, didQuit
+func getCoffeeGrindSettingWithSuggestions(quitStr string) (int, bool) {
+	fmt.Print("Enter grind setting: ")
+
+	// This assumes that every grinder has settings in the range 0 to 50
+	// An improvement would be to look up the possible grind settings using the grinder name
+	return validateIntInput(quitStr, false, 0, 50, nil)
+}
+
+// Returns coffeeName, didQuit, error
+func getCoffeeNameWithSuggestions(ctx context.Context, db DB, quitStr string) (string, bool, error) {
+	fmt.Print("Enter coffee name: ")
+
+	coffeeSuggestions, err := db.getCoffeeNameSuggestions(ctx, 8)
+	if err != nil {
+		return "", false, fmt.Errorf("buna: input_util: failed to get coffee suggestions: %w", err)
+	}
+
+	coffeeName, quit := validateStrInput(quitStr, false, nil, coffeeSuggestions)
+
+	return coffeeName, quit, nil
+}
+
+// Returns rating, didQuit
+func getCoffeeRatingWithSuggestions(quitStr string) (int, bool) {
+	fmt.Print("Enter your rating for this brew (1 <= x <= 10): ")
+
+	return validateIntInput(quitStr, true, 1, 10, nil)
+}
+
+// Returns roastDate, didQuit, error
+func getCoffeeRoastDateWithSuggestions(ctx context.Context, db DB, quitStr string, coffeeName string) (date, bool, error) {
+	roastDateSuggestion, err := db.getLastCoffeeRoastDate(ctx, coffeeName)
+	if err != nil {
+		return date{}, false, fmt.Errorf("buna: input_util: failed to get roast date suggestions: %w", err)
+	}
+
+	// Check if returned empty date
+	var roastDateSuggestions []date
+	if roastDateSuggestion.year != 0 {
+		roastDateSuggestions = append(roastDateSuggestions, roastDateSuggestion)
+	}
+
+	roastDate, quit := getDateInput(quitStr, true, "Enter roast ?: ", roastDateSuggestions)
+
+	return roastDate, quit, nil
+}
+
+// Returns coffeeRoasterName, didQuit, error
+func getCoffeeRoasterWithSuggestions(ctx context.Context, db DB, quitStr string, coffeeName string) (string, bool, error) {
+	fmt.Print("Enter roaster/producer name: ")
+
+	roasterSuggestions, err := db.getRoastersByCoffeeName(ctx, coffeeName, 5)
+	if err != nil {
+		return "", false, fmt.Errorf("buna: input_util: failed to get roaster suggestions: %w", err)
+	}
+
+	coffeeRoaster, quit := validateStrInput(quitStr, false, nil, roasterSuggestions)
+
+	return coffeeRoaster, quit, nil
+}
+
+// Returns coffeeGrams, didQuit, error
+func getCoffeeWeightWithSuggestions(ctx context.Context, db DB, quitStr string, brewingMethodName string, grinderName string) (int, bool, error) {
+	fmt.Print("Enter the coffee weight used in grams: ")
+
+	coffeeWeightSuggestion, err := db.getMostRecentlyUsedCoffeeWeights(ctx, brewingMethodName, grinderName, 5)
+	if err != nil {
+		return 0, false, fmt.Errorf("buna: input_util: failed to get coffee weight suggestions: %w", err)
+	}
+
+	coffeeGrams, quit := validateIntInput(quitStr, false, 5, 100, coffeeWeightSuggestion)
+
+	return coffeeGrams, quit, nil
+}
+
+// Returns recommendedGrindSettingAdjustment, didQuit
+func getRecommendedGrindSettingAdjustmentWithSuggestions(quitStr string) (string, bool) {
+	fmt.Print("Enter recommended grind setting adjustment: ")
+
+	return validateStrInput(quitStr, true, []string{"lower", "higher"}, nil)
+}
+
+// Returns recommendedCoffeeWeightAdjustmentGrams, didQuit
+func getRecommendedCoffeeWeightAdjustmentGramsWithSuggestions(quitStr string) (int, bool) {
+	fmt.Print("Enter recommended coffee weight adjustment in grams (-20 <= x <= 20): ")
+
+	return validateIntInput(quitStr, true, -20, 20, nil)
+}
+
+// Returns totalCoffeeBrewingTimeSec, didQuit
+func getTotalCoffeeBrewingTimeSecWithSuggestions(quitStr string) (int, bool) {
+	fmt.Print("Enter the total brewing time in seconds: ")
+
+	return validateIntInput(quitStr, false, 10, 1800, nil)
+}
+
+// Returns v60FilterType, didQuit
+func getV60FilterTypeWithSuggestions(quitStr string) (string, bool) {
+	fmt.Print("Enter v60 filter type: ")
+
+	return validateStrInput(quitStr, true, []string{"eu", "jp"}, nil)
+}
+
+// Returns waterGrams, didQuit, error
+func getWaterWeightWithSuggestions(ctx context.Context, db DB, quitStr string, brewingMethodName string, grinderName string) (int, bool, error) {
+	fmt.Print("Enter the water weight used in grams: ")
+
+	waterWeightSuggestion, err := db.getMostRecentlyUsedWaterWeights(ctx, brewingMethodName, grinderName, 5)
+	if err != nil {
+		return 0, false, fmt.Errorf("buna: input_util: failed to get water weight suggestions: %w", err)
+	}
+
+	waterGrams, quit := validateIntInput(quitStr, false, 20, 2000, waterWeightSuggestion)
+
+	return waterGrams, quit, nil
 }
 
 // Creates a date sring in the format "YYYY-MM-DD".
