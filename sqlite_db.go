@@ -189,12 +189,12 @@ func (s *SQLiteDB) getBrewingsByLastAdded(ctx context.Context, limit int) ([]bre
 					b.recommended_grind_setting_adjustment,
 					b.recommended_coffee_weight_adjustment_grams,
 					b.notes
-			FROM brewings as b
-			INNER JOIN coffees as c
+			FROM brewings AS b
+			INNER JOIN coffees AS c
 				ON c.id = b.coffee_id
-			INNER JOIN brewing_methods as m
+			INNER JOIN brewing_methods AS m
 				ON m.id = b.method_id
-			INNER JOIN grinders as g
+			INNER JOIN grinders AS g
 				ON g.id = b.grinder_id
 			ORDER BY b.id DESC
 			LIMIT :limit
@@ -271,6 +271,117 @@ func (s *SQLiteDB) getBrewingsByLastAdded(ctx context.Context, limit int) ([]bre
 		return nil
 	}); err != nil {
 		return nil, fmt.Errorf("buna: sqlite_db: displayBrewingsByLastAdded transaction failed: %w", err)
+	}
+
+	return brewings, nil
+}
+
+// The following fields are used from the brewingFilter argument:
+// brewingMethodName, v60FilterType, coffeeName, coffeeRoaster, coffeeGrams, waterGrams, grinderName
+func (s *SQLiteDB) getBrewingSuggestions(ctx context.Context, limit int, brewingFilter brewing) ([]brewing, error) {
+	brewings := make([]brewing, 0, limit)
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		rows, err := tx.QueryContext(ctx, `
+			SELECT 	b.grind_setting,
+					b.total_brewing_time_sec,
+					b.coffee_grams,
+					b.water_grams,
+					b.recommended_grind_setting_adjustment,
+					b.recommended_coffee_weight_adjustment_grams,
+					b.rating,
+					b.v60_filter_type,
+					c.name,
+					b.date,
+					g.name,
+					b.notes
+			FROM brewings AS b
+			INNER JOIN coffees AS c
+				ON c.id = b.coffee_id
+			INNER JOIN brewing_methods AS m
+				ON m.id = b.method_id
+			INNER JOIN grinders AS g
+				ON g.id = b.grinder_id
+			WHERE (m.name = :brewingMethodName)
+			AND (b.v60_filter_type = :v60FilterType OR "" = :v60FilterType)
+			AND (c.name = :coffeeName OR "" = :coffeeName)
+			AND (c.roaster = :coffeeRoaster OR "" = :coffeeRoaster)
+			AND (b.coffee_grams = :coffeeGrams OR 0 = :coffeeGrams)
+			AND (b.water_grams = :waterGrams OR 0 = :waterGrams)
+			AND (g.name = :grinderName OR "" = :grinderName)
+			ORDER BY b.id DESC
+			LIMIT :limit
+		`,
+			sql.Named("limit", limit),
+			sql.Named("brewingMethodName", brewingFilter.brewingMethodName),
+			sql.Named("v60FilterType", brewingFilter.v60FilterType),
+			sql.Named("coffeeName", brewingFilter.coffeeName),
+			sql.Named("coffeeRoaster", brewingFilter.coffeeRoaster),
+			sql.Named("coffeeGrams", brewingFilter.coffeeGrams),
+			sql.Named("waterGrams", brewingFilter.waterGrams),
+			sql.Named("grinderName", brewingFilter.grinderName),
+		)
+		if err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to retrieve brewing suggestion rows: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var brewing brewing
+			var recommendedGrindSettingAdjustment, recommendedCoffeeWeightAdjustmentGrams, rating, v60FilterType, notes interface{}
+			if err := rows.Scan(
+				&brewing.grindSetting,
+				&brewing.totalBrewingTimeSec,
+				&brewing.coffeeGrams,
+				&brewing.waterGrams,
+				&recommendedGrindSettingAdjustment,
+				&recommendedCoffeeWeightAdjustmentGrams,
+				&rating,
+				&v60FilterType,
+				&brewing.coffeeName,
+				&brewing.date,
+				&brewing.grinderName,
+				&notes,
+			); err != nil {
+				return fmt.Errorf("buna: sqlite_db: failed to scan row: %w", err)
+			}
+
+			// Deal with possible NULL values
+			if v := reflect.ValueOf(recommendedGrindSettingAdjustment); v.Kind() == reflect.String {
+				brewing.recommendedGrindSettingAdjustment = recommendedGrindSettingAdjustment.(string)
+			} else {
+				brewing.recommendedGrindSettingAdjustment = "None"
+			}
+			if v := reflect.ValueOf(recommendedCoffeeWeightAdjustmentGrams); v.Kind() == reflect.Int64 {
+				brewing.recommendedCoffeeWeightAdjustmentGrams = int(recommendedCoffeeWeightAdjustmentGrams.(int64))
+			} else {
+				brewing.recommendedCoffeeWeightAdjustmentGrams = 0
+			}
+			if v := reflect.ValueOf(rating); v.Kind() == reflect.Int64 {
+				brewing.rating = int(rating.(int64))
+			} else {
+				brewing.rating = 0
+			}
+			if v := reflect.ValueOf(v60FilterType); v.Kind() == reflect.String {
+				brewing.v60FilterType = v60FilterType.(string)
+			} else {
+				brewing.v60FilterType = "None"
+			}
+			if v := reflect.ValueOf(notes); v.Kind() == reflect.String {
+				brewing.notes = notes.(string)
+			} else {
+				brewing.notes = "None"
+			}
+
+			brewings = append(brewings, brewing)
+		}
+
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to scan last row: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("buna: sqlite_db: getBrewingSuggestions transaction failed: %w", err)
 	}
 
 	return brewings, nil

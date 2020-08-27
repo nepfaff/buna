@@ -344,6 +344,9 @@ func retrieveBrewing(ctx context.Context, db DB) error {
 func runRetrieveBrewingSelection(ctx context.Context, selection int, db DB) error {
 	switch selection {
 	case 0:
+		if err := displayBrewingSuggestions(ctx, db); err != nil {
+			return fmt.Errorf("buna: brewing: failed to display brewing suggestions: %w", err)
+		}
 	case 1:
 		if err := displayBrewingsByLastAdded(ctx, db); err != nil {
 			return fmt.Errorf("buna: brewing: failed to display brewings by last added: %w", err)
@@ -454,4 +457,198 @@ func displayBrewingsByLastAdded(ctx context.Context, db DB) error {
 	t.Render()
 
 	return nil
+}
+
+func displayBrewingSuggestions(ctx context.Context, db DB) error {
+	const defaultDisplayAmount = 6
+	const maxDisplayAmount = 20
+	const maxNoteFieldWidth = 50
+
+	fmt.Println("Displaying brewing suggestions (Enter # to quit):")
+
+	fmt.Print("Enter a limit for the number of suggestions to display: ")
+	limit, quit := validateIntInput(quitStr, true, 1, maxDisplayAmount, []int{})
+	if quit {
+		fmt.Println(quitMsg)
+		return nil
+	}
+	if limit == 0 {
+		limit = defaultDisplayAmount
+	}
+
+	fmt.Print("Enter brewing method name: ")
+	brewingMethodSuggestions, err := db.getMostRecentlyUsedBrewingMethodNames(ctx, 5)
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get brewing method suggestions: %w", err)
+	}
+	brewingMethodName, quit := validateStrInput(quitStr, false, nil, brewingMethodSuggestions)
+	if quit {
+		fmt.Println(quitMsg)
+		return nil
+	}
+
+	var v60FilterType string
+	if brewingMethodName == "v60" || brewingMethodName == "V60" {
+		fmt.Print("Enter v60 filter type (skip if want to display all): ")
+		v60FilterType, quit = validateStrInput(quitStr, true, []string{"eu", "jp"}, nil)
+		if quit {
+			fmt.Println(quitMsg)
+			return nil
+		}
+	}
+
+	fmt.Print("Show optional options (true or false): ")
+	showOptionalOptions, quit := validateBoolInput(quitStr, true)
+	if quit {
+		fmt.Println(quitMsg)
+		return nil
+	}
+
+	var (
+		coffeeName, coffeeRoaster, grinderName string
+		coffeeGrams, waterGrams                int
+	)
+	if showOptionalOptions {
+		fmt.Print("Enter coffee name: ")
+		coffeeSuggestions, err := db.getCoffeeNameSuggestions(ctx, 5)
+		if err != nil {
+			return fmt.Errorf("buna: brewing: failed to get coffee suggestions: %w", err)
+		}
+		coffeeName, quit = validateStrInput(quitStr, true, nil, coffeeSuggestions)
+		if quit {
+			fmt.Println(quitMsg)
+			return nil
+		}
+
+		if coffeeName != "" {
+			fmt.Print("Enter roaster/producer name: ")
+			roasterSuggestions, err := db.getRoastersByCoffeeName(ctx, coffeeName, 5)
+			if err != nil {
+				return fmt.Errorf("buna: brewing: failed to get roaster suggestions: %w", err)
+			}
+			coffeeRoaster, quit = validateStrInput(quitStr, true, nil, roasterSuggestions)
+			if quit {
+				fmt.Println(quitMsg)
+				return nil
+			}
+		}
+
+		fmt.Print("Enter coffee grinder name: ")
+		grinderSuggestions, err := db.getMostRecentlyUsedCoffeeGrinderNames(ctx, 5)
+		if err != nil {
+			return fmt.Errorf("buna: brewing: failed to get coffee grinder suggestions: %w", err)
+		}
+		grinderName, quit = validateStrInput(quitStr, true, nil, grinderSuggestions)
+		if quit {
+			fmt.Println(quitMsg)
+			return nil
+		}
+
+		fmt.Print("Enter the coffee weight used in grams: ")
+		coffeeWeightSuggestion, err := db.getMostRecentlyUsedCoffeeWeights(ctx, brewingMethodName, grinderName, 5)
+		if err != nil {
+			return fmt.Errorf("buna: brewing: failed to get coffee weight suggestions: %w", err)
+		}
+		coffeeGrams, quit = validateIntInput(quitStr, true, 5, 100, coffeeWeightSuggestion)
+		if quit {
+			fmt.Println(quitMsg)
+			return nil
+		}
+
+		fmt.Print("Enter the water weight used in grams: ")
+		waterWeightSuggestion, err := db.getMostRecentlyUsedWaterWeights(ctx, brewingMethodName, grinderName, 5)
+		if err != nil {
+			return fmt.Errorf("buna: brewing: failed to get water weight suggestions: %w", err)
+		}
+		waterGrams, quit = validateIntInput(quitStr, true, 20, 2000, waterWeightSuggestion)
+		if quit {
+			fmt.Println(quitMsg)
+			return nil
+		}
+	}
+
+	brewingFilter := brewing{
+		date:                                   "",
+		coffeeName:                             coffeeName,
+		coffeeRoaster:                          coffeeRoaster,
+		brewingMethodName:                      brewingMethodName,
+		roastDate:                              "",
+		grinderName:                            grinderName,
+		grindSetting:                           0,
+		totalBrewingTimeSec:                    0,
+		coffeeGrams:                            coffeeGrams,
+		waterGrams:                             waterGrams,
+		v60FilterType:                          v60FilterType,
+		rating:                                 0,
+		recommendedGrindSettingAdjustment:      "",
+		recommendedCoffeeWeightAdjustmentGrams: 0,
+		notes:                                  "",
+	}
+
+	suggestions, err := db.getBrewingSuggestions(ctx, limit, brewingFilter)
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get brewing suggestions: %w", err)
+	}
+
+	t := table.NewWriter()
+
+	t.AppendHeader(table.Row{
+		"Grind\nSetting",
+		"Time\n(s)",
+		"Coffee\nWeight\n(g)",
+		"Water\nWeight\n(g)",
+		"Recommended\nGrind\nAdjustment",
+		"Recommended\nCoffee\nAdjustment (g)",
+		"Notes",
+		"Rating",
+		"V60\nFilter\nType",
+		"Coffee\nName",
+		"Date",
+		"Grinder",
+	})
+
+	for _, suggestion := range suggestions {
+		notes := splitTextIntoField(suggestion.notes, maxNoteFieldWidth)
+		grinder := strings.ReplaceAll(suggestion.grinderName, "(", "\n(")
+
+		row := table.Row{
+			suggestion.grindSetting,
+			suggestion.totalBrewingTimeSec,
+			suggestion.coffeeGrams,
+			suggestion.waterGrams,
+			suggestion.recommendedGrindSettingAdjustment,
+			suggestion.recommendedCoffeeWeightAdjustmentGrams,
+			notes,
+			suggestion.rating,
+			suggestion.v60FilterType,
+			suggestion.coffeeName,
+			suggestion.date,
+			grinder,
+		}
+
+		t.AppendRow(row)
+		t.AppendSeparator()
+	}
+
+	terminalWidth, _, err := terminal.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		return fmt.Errorf("buna: brewing: failed to get terminal width: %w", err)
+	}
+	t.SetAllowedRowLength(terminalWidth)
+
+	t.SetOutputMirror(os.Stdout)
+	t.Render()
+
+	return nil
+}
+
+func splitTextIntoField(text string, maxFieldWidth int) string {
+	for i := maxFieldWidth; i < len(text); i += maxFieldWidth {
+		for string(text[i]) != " " {
+			i--
+		}
+		text = text[:i] + "\n" + text[i:]
+	}
+
+	return text
 }

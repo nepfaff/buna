@@ -16,6 +16,7 @@ type DB interface {
 	// retrieve
 	getCoffeeNameSuggestions(ctx context.Context, limit int) ([]string, error)
 	getBrewingsByLastAdded(ctx context.Context, limit int) ([]brewing, error)
+	getBrewingSuggestions(ctx context.Context, limit int, brewingFilter brewing) ([]brewing, error)
 	getCoffeesByLastAdded(ctx context.Context, limit int) ([]coffee, error)
 	getLastCoffeeRoastDate(ctx context.Context, coffeeName string) (date, error)
 	getMostRecentlyUsedBrewingMethodNames(ctx context.Context, limit int) ([]string, error)
