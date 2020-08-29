@@ -11,13 +11,17 @@ type DB interface {
 	insertBrewingMethod(ctx context.Context, brewingMethod brewingMethod) error
 	insertCoffee(ctx context.Context, coffee coffee) error
 	insertCoffeePurchase(ctx context.Context, coffeePurchase coffeePurchase) error
+	insertCupping(ctx context.Context, cupping cupping) error
 	insertGrinder(ctx context.Context, grinder grinder) error
 
 	// retrieve
 	getCoffeeNameSuggestions(ctx context.Context, limit int) ([]string, error)
 	getBrewingsByLastAdded(ctx context.Context, limit int) ([]brewing, error)
 	getBrewingSuggestions(ctx context.Context, limit int, brewingFilter brewing) ([]brewing, error)
+	getCoffeeIDByNameRoaster(ctx context.Context, name string, roaster string) (int, error)
 	getCoffeesByLastAdded(ctx context.Context, limit int) ([]coffee, error)
+	getGrinderIDByName(ctx context.Context, name string) (int, error)
+	getMethodIDByName(ctx context.Context, name string) (int, error)
 	getLastCoffeeRoastDate(ctx context.Context, coffeeName string) (date, error)
 	getMostRecentlyUsedBrewingMethodNames(ctx context.Context, limit int) ([]string, error)
 	getMostRecentlyUsedCoffeeGrinderNames(ctx context.Context, limit int) ([]string, error)

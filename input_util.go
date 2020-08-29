@@ -341,10 +341,10 @@ func getBrewingMethodNameWithSuggestions(ctx context.Context, db DB, quitStr str
 }
 
 // Returns notes, didQuit
-func getBrewingNotesWithSuggestions(quitStr string) (string, bool) {
-	fmt.Print("Enter some notes about this brewing: ")
+func getNotes(quitStr string, optional bool, noteType string) (string, bool) {
+	fmt.Print("Enter some " + noteType + " notes: ")
 
-	return validateStrInput(quitStr, true, nil, nil)
+	return validateStrInput(quitStr, optional, nil, nil)
 }
 
 // Returns grinderName, didQuit, error

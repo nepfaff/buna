@@ -137,7 +137,8 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 				date TEXT NOT NULL,
 				duration_min INTEGER NOT NULL
 					CHECK (duration_min > 0),
-				notes TEXT NOT NULL
+				notes TEXT NOT NULL,
+				UNIQUE(date, notes)
 			)
 		`); err != nil {
 			return fmt.Errorf("buna: sqlite_db: failed to create cuppings table: %w", err)
@@ -387,6 +388,27 @@ func (s *SQLiteDB) getBrewingSuggestions(ctx context.Context, limit int, brewing
 	return brewings, nil
 }
 
+func (s *SQLiteDB) getCoffeeIDByNameRoaster(ctx context.Context, name string, roaster string) (int, error) {
+	var coffeeID int
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		if err := tx.QueryRowContext(ctx, `
+			SELECT id from coffees
+			WHERE name = :name AND roaster = :roaster
+		`,
+			sql.Named("name", name),
+			sql.Named("roaster", roaster),
+		).Scan(&coffeeID); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to retrieve coffee id from db: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return 0, fmt.Errorf("buna: sqlite_db: getCoffeeIDByNameRoaster transaction failed: %w", err)
+	}
+
+	return coffeeID, nil
+}
+
 func (s *SQLiteDB) getCoffeesByLastAdded(ctx context.Context, limit int) ([]coffee, error) {
 	coffees := make([]coffee, 0, limit)
 	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
@@ -443,6 +465,48 @@ func (s *SQLiteDB) getCoffeesByLastAdded(ctx context.Context, limit int) ([]coff
 	}
 
 	return coffees, nil
+}
+
+func (s *SQLiteDB) getGrinderIDByName(ctx context.Context, name string) (int, error) {
+	var grinderID int
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		if err := tx.QueryRowContext(ctx, `
+			SELECT id
+			FROM grinders
+			WHERE name = :grinderName
+		`,
+			sql.Named("grinderName", name),
+		).Scan(&grinderID); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to retrieve grinder id from db: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return 0, fmt.Errorf("buna: sqlite_db: getGrinderIDByName transaction failed: %w", err)
+	}
+
+	return grinderID, nil
+}
+
+func (s *SQLiteDB) getMethodIDByName(ctx context.Context, name string) (int, error) {
+	var methodID int
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		if err := tx.QueryRowContext(ctx, `
+			SELECT id
+			FROM brewing_methods
+			WHERE name = :brewingMethodName
+		`,
+			sql.Named("brewingMethodName", name),
+		).Scan(&methodID); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to retrieve method id from db: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return 0, fmt.Errorf("buna: sqlite_db: getMethodIDByName transaction failed: %w", err)
+	}
+
+	return methodID, nil
 }
 
 func (s *SQLiteDB) TransactContext(ctx context.Context, f func(ctx context.Context, tx *sql.Tx) error) (err error) {

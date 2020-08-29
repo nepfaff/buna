@@ -142,7 +142,7 @@ func addBrewing(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	notes, quit := getBrewingNotesWithSuggestions(quitStr)
+	notes, quit := getNotes(quitStr, true, "brewing")
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
@@ -176,39 +176,20 @@ func addBrewing(ctx context.Context, db DB) error {
 
 func (s *SQLiteDB) insertBrewing(ctx context.Context, brewing brewing) error {
 	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		var coffeeID int
-		if err := tx.QueryRowContext(ctx, `
-			SELECT id
-			FROM coffees
-			WHERE name = :coffeeName AND (roaster = :coffeeRoaster OR (:coffeeRoaster = "" AND roaster IS NULL))
-		`,
-			sql.Named("coffeeName", brewing.coffeeName),
-			sql.Named("coffeeRoaster", brewing.coffeeRoaster),
-		).Scan(&coffeeID); err != nil {
+		coffeeID, err := s.getCoffeeIDByNameRoaster(ctx, brewing.coffeeName, brewing.coffeeRoaster)
+		if err != nil {
 			fmt.Println("Unable to link this brewing to an existing coffee. Please create a new coffee first and then try again.")
 			return nil
 		}
 
-		var methodID int
-		if err := tx.QueryRowContext(ctx, `
-			SELECT id
-			FROM brewing_methods
-			WHERE name = :brewingMethodName
-		`,
-			sql.Named("brewingMethodName", brewing.brewingMethodName),
-		).Scan(&methodID); err != nil {
+		methodID, err := s.getMethodIDByName(ctx, brewing.brewingMethodName)
+		if err != nil {
 			fmt.Println("Unable to link this brewing to an existing brewing method. Please create a new brewing method first and then try again.")
 			return nil
 		}
 
-		var grinderID int
-		if err := tx.QueryRowContext(ctx, `
-			SELECT id
-			FROM grinders
-			WHERE name = :grinderName
-		`,
-			sql.Named("grinderName", brewing.grinderName),
-		).Scan(&grinderID); err != nil {
+		grinderID, err := s.getGrinderIDByName(ctx, brewing.grinderName)
+		if err != nil {
 			fmt.Println("Unable to link this brewing to an existing coffee grinder. Please create a new coffee grinder first and then try again.")
 			return nil
 		}
