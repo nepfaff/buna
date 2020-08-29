@@ -2,7 +2,6 @@ package buna
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"math"
 	"strconv"
@@ -110,50 +109,5 @@ func addCupping(ctx context.Context, db DB) error {
 	}
 
 	fmt.Println("Added cupping successfully")
-	return nil
-}
-
-func (s *SQLiteDB) insertCupping(ctx context.Context, cupping cupping) error {
-	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		res, err := tx.ExecContext(ctx, `
-			INSERT INTO cuppings(date, duration_min, notes)
-			VALUES (:cuppingDate, :cuppingDurationMin, :cuppingNotes)
-		`,
-			sql.Named("cuppingDate", cupping.date),
-			sql.Named("cuppingDurationMin", cupping.durationMin),
-			sql.Named("cuppingNotes", cupping.notes),
-		)
-		if err != nil {
-			return fmt.Errorf("buna: cupping: failed to insert cupping into db: %w", err)
-		}
-
-		cuppingID, err := res.LastInsertId()
-		if err != nil {
-			return fmt.Errorf("buna: cupping: failed to get cupping id: %w", err)
-		}
-
-		for _, cuppedCoffee := range cupping.cuppedCoffees {
-			coffeeID, err := s.getCoffeeIDByNameRoaster(ctx, cuppedCoffee.name, cuppedCoffee.roaster)
-			if err != nil {
-				return fmt.Errorf("buna: cupping: failed to retrieve coffee id from db: %w", err)
-			}
-
-			if _, err := tx.ExecContext(ctx, `
-				INSERT INTO cupped_coffees(cupping_id, coffee_id, rank, notes)
-				VALUES (:cuppingID, :coffeeID, :coffeeRank, :coffeeNotes)
-			`,
-				sql.Named("cuppingID", cuppingID),
-				sql.Named("coffeeID", coffeeID),
-				sql.Named("coffeeRank", cuppedCoffee.rank),
-				sql.Named("coffeeNotes", cuppedCoffee.notes),
-			); err != nil {
-				return fmt.Errorf("buna: cupping: failed to insert cupped coffee into db: %w", err)
-			}
-		}
-
-		return nil
-	}); err != nil {
-		return fmt.Errorf("buna: cupping: insert cupping transaction failed: %w", err)
-	}
 	return nil
 }

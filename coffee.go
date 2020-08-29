@@ -2,7 +2,6 @@ package buna
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -80,42 +79,6 @@ func addCoffee(ctx context.Context, db DB) (coffee, error) {
 
 	fmt.Println("Added coffee successfully")
 	return newCoffee, nil
-}
-
-func (s *SQLiteDB) insertCoffee(ctx context.Context, coffee coffee) error {
-	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO coffees(name, roaster, region, variety, method, decaf)
-			VALUES (:name, :roaster, :region, :variety, :method, :decaf)
-		`,
-			sql.Named("name", coffee.name),
-			sql.Named("roaster", coffee.roaster),
-			sql.Named("region", coffee.region),
-			sql.Named("variety", coffee.variety),
-			sql.Named("method", coffee.method),
-			sql.Named("decaf", coffee.decaf),
-		); err != nil {
-			return fmt.Errorf("buna: coffee: failed to insert coffee into db: %w", err)
-		}
-
-		if _, err := tx.ExecContext(ctx, `
-			UPDATE coffees
-			SET roaster = NULLIF(roaster, ""),
-				region = NULLIF(region, ""),
-				variety = NULLIF(variety, ""),
-				method = NULLIF(method, "")
-			WHERE name = :name
-		`,
-			sql.Named("name", coffee.name),
-		); err != nil {
-			return fmt.Errorf("buna: coffee: failed to set null values: %w", err)
-		}
-
-		return nil
-	}); err != nil {
-		return fmt.Errorf("buna: coffee: insertCoffee transaction failed: %w", err)
-	}
-	return nil
 }
 
 func retrieveCoffee(ctx context.Context, db DB) error {

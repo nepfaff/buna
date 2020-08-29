@@ -2,7 +2,6 @@ package buna
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -171,99 +170,6 @@ func addBrewing(ctx context.Context, db DB) error {
 	}
 
 	fmt.Println("Added coffee brewing successfully")
-	return nil
-}
-
-func (s *SQLiteDB) insertBrewing(ctx context.Context, brewing brewing) error {
-	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		coffeeID, err := s.getCoffeeIDByNameRoaster(ctx, brewing.coffeeName, brewing.coffeeRoaster)
-		if err != nil {
-			fmt.Println("Unable to link this brewing to an existing coffee. Please create a new coffee first and then try again.")
-			return nil
-		}
-
-		methodID, err := s.getMethodIDByName(ctx, brewing.brewingMethodName)
-		if err != nil {
-			fmt.Println("Unable to link this brewing to an existing brewing method. Please create a new brewing method first and then try again.")
-			return nil
-		}
-
-		grinderID, err := s.getGrinderIDByName(ctx, brewing.grinderName)
-		if err != nil {
-			fmt.Println("Unable to link this brewing to an existing coffee grinder. Please create a new coffee grinder first and then try again.")
-			return nil
-		}
-
-		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO brewings(
-				coffee_id,
-				method_id,
-				grinder_id,
-				date,
-				roast_date,
-				grind_setting,
-				total_brewing_time_sec,
-				water_grams,
-				coffee_grams,
-				v60_filter_type,
-				rating,
-				recommended_grind_setting_adjustment,
-				recommended_coffee_weight_adjustment_grams,
-				notes
-			)
-			VALUES (
-				:coffeeID,
-				:methodID,
-				:grinderID,
-				:date,
-				:roastDate,
-				:grindSetting,
-				:totalBrewingTimeSec,
-				:waterGrams,
-				:coffeeGrams,
-				:v60FilterType,
-				:rating,
-				:recommendedGrindSettingAdjustment,
-				:recommendedCoffeeWeightAdjustmentGrams,
-				:notes
-			)
-		`,
-			sql.Named("coffeeID", coffeeID),
-			sql.Named("methodID", methodID),
-			sql.Named("grinderID", grinderID),
-			sql.Named("date", brewing.date),
-			sql.Named("roastDate", brewing.roastDate),
-			sql.Named("grindSetting", brewing.grindSetting),
-			sql.Named("totalBrewingTimeSec", brewing.totalBrewingTimeSec),
-			sql.Named("waterGrams", brewing.waterGrams),
-			sql.Named("coffeeGrams", brewing.coffeeGrams),
-			sql.Named("v60FilterType", brewing.v60FilterType),
-			sql.Named("rating", brewing.rating),
-			sql.Named("recommendedGrindSettingAdjustment", brewing.recommendedGrindSettingAdjustment),
-			sql.Named("recommendedCoffeeWeightAdjustmentGrams", brewing.recommendedCoffeeWeightAdjustmentGrams),
-			sql.Named("notes", brewing.notes),
-		); err != nil {
-			return fmt.Errorf("buna: brewing: failed to insert coffee brewing into db: %w", err)
-		}
-
-		if _, err := tx.ExecContext(ctx, `
-			UPDATE brewings
-			SET roast_date = NULLIF(roast_date, "0-00-00"),
-				v60_filter_type = NULLIF(v60_filter_type, ""),
-				rating = NULLIF(rating, 0),
-				recommended_grind_setting_adjustment = NULLIF(recommended_grind_setting_adjustment, "")
-			WHERE coffee_id = :coffeeID AND date = :date
-		`,
-			sql.Named("coffeeID", coffeeID),
-			sql.Named("date", brewing.date),
-		); err != nil {
-			return fmt.Errorf("buna: brewing: failed to set null values: %w", err)
-		}
-
-		return nil
-	}); err != nil {
-		return fmt.Errorf("buna: brewing: transaction failed: %w", err)
-	}
 	return nil
 }
 

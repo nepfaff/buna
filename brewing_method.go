@@ -2,7 +2,6 @@ package buna
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 )
 
@@ -28,23 +27,5 @@ func addBrewingMethod(ctx context.Context, db DB) error {
 	}
 
 	fmt.Println("Added coffee brewing method successfully")
-	return nil
-}
-
-func (s *SQLiteDB) insertBrewingMethod(ctx context.Context, brewingMethod brewingMethod) error {
-	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		if _, err := tx.ExecContext(ctx, `
-			INSERT INTO brewing_methods(name)
-			VALUES (:name)
-		`,
-			sql.Named("name", brewingMethod.name),
-		); err != nil {
-			return fmt.Errorf("buna: brewing_method: failed to insert coffee brewing method into db: %w", err)
-		}
-
-		return nil
-	}); err != nil {
-		return fmt.Errorf("buna: brewing_method: transaction failed: %w", err)
-	}
 	return nil
 }
