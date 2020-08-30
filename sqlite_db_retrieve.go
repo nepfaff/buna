@@ -107,7 +107,7 @@ func (s *SQLiteDB) getBrewingsByLastAdded(ctx context.Context, limit int) ([]bre
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("buna: sqlite_db: displayBrewingsByLastAdded transaction failed: %w", err)
+		return nil, fmt.Errorf("buna: sqlite_db: getBrewingsByLastAdded transaction failed: %w", err)
 	}
 
 	return brewings, nil
@@ -297,10 +297,105 @@ func (s *SQLiteDB) getCoffeesByLastAdded(ctx context.Context, limit int) ([]coff
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("buna: sqlite_db: displayCoffeesByLastAdded transaction failed: %w", err)
+		return nil, fmt.Errorf("buna: sqlite_db: getCoffeesByLastAdded transaction failed: %w", err)
 	}
 
 	return coffees, nil
+}
+
+func (s *SQLiteDB) getCuppingsByLastAdded(ctx context.Context, limit int) ([]cupping, error) {
+	var cuppings []cupping
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		var realLimit interface{}
+		if err := tx.QueryRowContext(ctx, `
+			SELECT sum(coffeesPerCupping)
+			FROM (
+				SELECT cu.id, count(*) as coffeesPerCupping
+				FROM cuppings AS cu
+				INNER JOIN cupped_coffees AS cc
+					ON cu.id = cc.cupping_id
+				GROUP BY cu.id
+				LIMIT :limit
+			)
+		`,
+			sql.Named("limit", limit),
+		).Scan(&realLimit); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to retrieve real cupping limit from db: %w", err)
+		}
+
+		var realLimitInt int
+		if v := reflect.ValueOf(realLimit); v.Kind() == reflect.Int {
+			realLimitInt = realLimit.(int)
+		} else {
+			// realLimit == NULL
+			return nil
+		}
+
+		rows, err := tx.QueryContext(ctx, `
+			SELECT cu.id, cu.date, cu.duration_min, cu.notes, c.name, cc.rank, cc.notes
+			FROM cuppings AS cu
+			INNER JOIN cupped_coffees AS cc
+				ON cu.id = cc.cupping_id
+			INNER JOIN coffees AS c
+				ON c.id = cc.coffee_id
+			ORDER BY cu.id DESC, cc.rank
+			LIMIT :limit
+		`,
+			sql.Named("limit", realLimitInt),
+		)
+		if err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to retrieve cupping rows: %w", err)
+		}
+		defer rows.Close()
+
+		isFirstRow := true
+		var prevCuppingID int
+		var cupping cupping
+		var cuppedCoffees []cuppedCoffee
+		for rows.Next() {
+			var cuppingID int
+			var coffee cuppedCoffee
+			if err := rows.Scan(
+				&cuppingID,
+				&cupping.date,
+				&cupping.durationMin,
+				&cupping.notes,
+				&coffee.name,
+				&coffee.rank,
+				&coffee.notes,
+			); err != nil {
+				return fmt.Errorf("buna: sqlite_db: failed to scan cupping row: %w", err)
+			}
+
+			if isFirstRow {
+				prevCuppingID = cuppingID
+				isFirstRow = false
+			}
+
+			if prevCuppingID != cuppingID {
+				cupping.cuppedCoffees = make([]cuppedCoffee, len(cuppedCoffees))
+				copy(cupping.cuppedCoffees, cuppedCoffees)
+				cuppings = append(cuppings, cupping)
+
+				cuppedCoffees = cuppedCoffees[:0]
+				prevCuppingID = cuppingID
+			}
+
+			cuppedCoffees = append(cuppedCoffees, coffee)
+		}
+		cupping.cuppedCoffees = cuppedCoffees
+		cuppings = append(cuppings, cupping)
+
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("buna: sqlite_db: failed to scan last row: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("buna: sqlite_db: getCuppingsByLastAdded transaction failed: %w", err)
+	}
+
+	return cuppings, nil
 }
 
 func (s *SQLiteDB) getGrinderIDByName(ctx context.Context, name string) (int, error) {

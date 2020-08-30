@@ -100,7 +100,7 @@ func retrieveCoffee(ctx context.Context, db DB) error {
 
 	selection, quit, err := getIntSelection(options, quitStr)
 	if err != nil {
-		return fmt.Errorf("buna: brewing: failed to get int selection: %w", err)
+		return fmt.Errorf("buna: coffee: failed to get int selection: %w", err)
 	}
 	if quit {
 		fmt.Println(quitMsg)

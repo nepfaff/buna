@@ -488,14 +488,3 @@ func displayBrewingSuggestions(ctx context.Context, db DB) error {
 
 	return nil
 }
-
-func splitTextIntoField(text string, maxFieldWidth int) string {
-	for i := maxFieldWidth; i < len(text); i += maxFieldWidth {
-		for string(text[i]) != " " {
-			i--
-		}
-		text = text[:i] + "\n" + text[i:]
-	}
-
-	return text
-}

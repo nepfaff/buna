@@ -592,3 +592,20 @@ func displayIntOptions(options map[int]string) error {
 
 	return nil
 }
+
+func splitTextIntoField(text string, maxFieldWidth int) string {
+	for i := maxFieldWidth; i < len(text); i += maxFieldWidth {
+		max := i
+		for string(text[i]) != " " {
+			i--
+
+			if i < 0 {
+				i = max
+				break
+			}
+		}
+		text = text[:i] + "\n" + text[i:]
+	}
+
+	return text
+}

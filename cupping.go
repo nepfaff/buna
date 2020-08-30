@@ -2,10 +2,15 @@ package buna
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
+	"os"
 	"strconv"
 	"time"
+
+	"github.com/jedib0t/go-pretty/table"
+	"golang.org/x/crypto/ssh/terminal"
 )
 
 type cupping struct {
@@ -109,5 +114,111 @@ func addCupping(ctx context.Context, db DB) error {
 	}
 
 	fmt.Println("Added cupping successfully")
+	return nil
+}
+
+func retrieveCupping(ctx context.Context, db DB) error {
+	options := map[int]string{
+		0: "Retrieve cuppings ordered by last added",
+	}
+
+	fmt.Println("Retrieving cuppings (Enter # to quit):")
+	if err := displayIntOptions(options); err != nil {
+		return fmt.Errorf("buna: cupping: failed to display int options: %w", err)
+	}
+
+	selection, quit, err := getIntSelection(options, quitStr)
+	if err != nil {
+		return fmt.Errorf("buna: cupping: failed to get int selection: %w", err)
+	}
+	if quit {
+		fmt.Println(quitMsg)
+		return nil
+	}
+
+	if err := runRetrieveCuppingSelection(ctx, selection, db); err != nil {
+		return fmt.Errorf("buna: cupping: failed to run the retrieve selection: %w", err)
+	}
+
+	return nil
+}
+
+func runRetrieveCuppingSelection(ctx context.Context, selection int, db DB) error {
+	switch selection {
+	case 0:
+		if err := displayCuppingsByLastAdded(ctx, db); err != nil {
+			return fmt.Errorf("buna: cupping: failed to display cuppings by last added: %w", err)
+		}
+	default:
+		return errors.New("buna: cupping: invalid retrieve selection")
+	}
+	return nil
+}
+
+// Promts user for an optional limit.
+func displayCuppingsByLastAdded(ctx context.Context, db DB) error {
+	const defaultDisplayAmount = 3
+	const maxDisplayAmount = 10
+	const maxNoteFieldWidth = 100
+
+	fmt.Println("Displaying cuppings by last added (Enter # to quit):")
+	fmt.Print("Enter a limit for the number of cuppings to display: ")
+	limit, quit := validateIntInput(quitStr, true, 1, maxDisplayAmount, []int{})
+	if quit {
+		fmt.Println(quitMsg)
+		return nil
+	}
+
+	if limit == 0 {
+		limit = defaultDisplayAmount
+	}
+
+	cuppings, err := db.getCuppingsByLastAdded(ctx, limit)
+	if err != nil {
+		return fmt.Errorf("buna: cupping: failed to get cuppings by last added: %w", err)
+	}
+
+	if len(cuppings) == 0 {
+		fmt.Println("No cuppings to display")
+		return nil
+	}
+
+	terminalWidth, _, err := terminal.GetSize(int(os.Stdin.Fd()))
+	if err != nil {
+		return fmt.Errorf("buna: cupping: failed to get terminal width: %w", err)
+	}
+
+	for _, cupping := range cuppings {
+		// Cupping table
+		t := table.NewWriter()
+
+		t.AppendHeader(table.Row{"Date", "Duration (min)", "General notes"})
+
+		cuppingNotes := splitTextIntoField(cupping.notes, maxNoteFieldWidth)
+
+		t.AppendRow(table.Row{cupping.date, cupping.durationMin, cuppingNotes})
+
+		t.SetAllowedRowLength(terminalWidth)
+		t.SetOutputMirror(os.Stdout)
+		t.Render()
+
+		// Cupped coffees table
+		t = table.NewWriter()
+
+		t.AppendHeader(table.Row{"Coffee name", "Rank (1 = best)", "Coffee notes"})
+
+		for _, cuppedCoffee := range cupping.cuppedCoffees {
+			cuppedCoffeeNotes := splitTextIntoField(cuppedCoffee.notes, maxNoteFieldWidth)
+
+			t.AppendRow(table.Row{cuppedCoffee.name, cuppedCoffee.rank, cuppedCoffeeNotes})
+			t.AppendSeparator()
+		}
+
+		t.SetAllowedRowLength(terminalWidth)
+		t.SetOutputMirror(os.Stdout)
+		t.Render()
+		fmt.Println()
+	}
+
 	return nil
 }
