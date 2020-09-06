@@ -39,7 +39,7 @@ func (s *SQLiteDB) getBrewingsByLastAdded(ctx context.Context, limit int) ([]bre
 			sql.Named("limit", limit),
 		)
 		if err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to retrieve brewing rows: %w", err)
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to retrieve brewing rows: %w", err)
 		}
 		defer rows.Close()
 
@@ -63,7 +63,7 @@ func (s *SQLiteDB) getBrewingsByLastAdded(ctx context.Context, limit int) ([]bre
 				&recommendedCoffeeWeightAdjustmentGrams,
 				&notes,
 			); err != nil {
-				return fmt.Errorf("buna: sqlite_db: failed to scan row: %w", err)
+				return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan row: %w", err)
 			}
 
 			// Deal with possible NULL values
@@ -102,12 +102,12 @@ func (s *SQLiteDB) getBrewingsByLastAdded(ctx context.Context, limit int) ([]bre
 		}
 
 		if err := rows.Err(); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to scan last row: %w", err)
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan last row: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("buna: sqlite_db: getBrewingsByLastAdded transaction failed: %w", err)
+		return nil, fmt.Errorf("buna: sqlite_db_retrieve: getBrewingsByLastAdded transaction failed: %w", err)
 	}
 
 	return brewings, nil
@@ -158,7 +158,7 @@ func (s *SQLiteDB) getBrewingSuggestions(ctx context.Context, limit int, brewing
 			sql.Named("grinderName", brewingFilter.grinderName),
 		)
 		if err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to retrieve brewing suggestion rows: %w", err)
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to retrieve brewing suggestion rows: %w", err)
 		}
 		defer rows.Close()
 
@@ -179,7 +179,7 @@ func (s *SQLiteDB) getBrewingSuggestions(ctx context.Context, limit int, brewing
 				&brewing.grinderName,
 				&notes,
 			); err != nil {
-				return fmt.Errorf("buna: sqlite_db: failed to scan row: %w", err)
+				return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan row: %w", err)
 			}
 
 			// Deal with possible NULL values
@@ -213,12 +213,12 @@ func (s *SQLiteDB) getBrewingSuggestions(ctx context.Context, limit int, brewing
 		}
 
 		if err := rows.Err(); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to scan last row: %w", err)
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan last row: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("buna: sqlite_db: getBrewingSuggestions transaction failed: %w", err)
+		return nil, fmt.Errorf("buna: sqlite_db_retrieve: getBrewingSuggestions transaction failed: %w", err)
 	}
 
 	return brewings, nil
@@ -234,12 +234,12 @@ func (s *SQLiteDB) getCoffeeIDByNameRoaster(ctx context.Context, name string, ro
 			sql.Named("name", name),
 			sql.Named("roaster", roaster),
 		).Scan(&coffeeID); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to retrieve coffee id from db: %w", err)
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to retrieve coffee id from db: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return 0, fmt.Errorf("buna: sqlite_db: getCoffeeIDByNameRoaster transaction failed: %w", err)
+		return 0, fmt.Errorf("buna: sqlite_db_retrieve: getCoffeeIDByNameRoaster transaction failed: %w", err)
 	}
 
 	return coffeeID, nil
@@ -257,7 +257,7 @@ func (s *SQLiteDB) getCoffeesByLastAdded(ctx context.Context, limit int) ([]coff
 			sql.Named("limit", limit),
 		)
 		if err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to retrieve coffee rows: %w", err)
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to retrieve coffee rows: %w", err)
 		}
 		defer rows.Close()
 
@@ -265,7 +265,7 @@ func (s *SQLiteDB) getCoffeesByLastAdded(ctx context.Context, limit int) ([]coff
 			var coffee coffee
 			var region, variety, method, decaf interface{}
 			if err := rows.Scan(&coffee.name, &coffee.roaster, &region, &variety, &method, &decaf); err != nil {
-				return fmt.Errorf("buna: sqlite_db: failed to scan row: %w", err)
+				return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan row: %w", err)
 			}
 
 			// Deal with possible NULL values
@@ -292,12 +292,12 @@ func (s *SQLiteDB) getCoffeesByLastAdded(ctx context.Context, limit int) ([]coff
 		}
 
 		if err := rows.Err(); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to scan last row: %w", err)
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan last row: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("buna: sqlite_db: getCoffeesByLastAdded transaction failed: %w", err)
+		return nil, fmt.Errorf("buna: sqlite_db_retrieve: getCoffeesByLastAdded transaction failed: %w", err)
 	}
 
 	return coffees, nil
@@ -320,7 +320,7 @@ func (s *SQLiteDB) getCuppingsByLastAdded(ctx context.Context, limit int) ([]cup
 		`,
 			sql.Named("limit", limit),
 		).Scan(&realLimit); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to retrieve real cupping limit from db: %w", err)
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to retrieve real cupping limit from db: %w", err)
 		}
 
 		var realLimitInt int64
@@ -344,7 +344,7 @@ func (s *SQLiteDB) getCuppingsByLastAdded(ctx context.Context, limit int) ([]cup
 			sql.Named("limit", realLimitInt),
 		)
 		if err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to retrieve cupping rows: %w", err)
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to retrieve cupping rows: %w", err)
 		}
 		defer rows.Close()
 
@@ -364,7 +364,7 @@ func (s *SQLiteDB) getCuppingsByLastAdded(ctx context.Context, limit int) ([]cup
 				&coffee.rank,
 				&coffee.notes,
 			); err != nil {
-				return fmt.Errorf("buna: sqlite_db: failed to scan cupping row: %w", err)
+				return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan cupping row: %w", err)
 			}
 
 			if isFirstRow {
@@ -387,12 +387,12 @@ func (s *SQLiteDB) getCuppingsByLastAdded(ctx context.Context, limit int) ([]cup
 		cuppings = append(cuppings, cupping)
 
 		if err := rows.Err(); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to scan last row: %w", err)
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan last row: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("buna: sqlite_db: getCuppingsByLastAdded transaction failed: %w", err)
+		return nil, fmt.Errorf("buna: sqlite_db_retrieve: getCuppingsByLastAdded transaction failed: %w", err)
 	}
 
 	return cuppings, nil
@@ -408,12 +408,12 @@ func (s *SQLiteDB) getGrinderIDByName(ctx context.Context, name string) (int, er
 		`,
 			sql.Named("grinderName", name),
 		).Scan(&grinderID); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to retrieve grinder id from db: %w", err)
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to retrieve grinder id from db: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return 0, fmt.Errorf("buna: sqlite_db: getGrinderIDByName transaction failed: %w", err)
+		return 0, fmt.Errorf("buna: sqlite_db_retrieve: getGrinderIDByName transaction failed: %w", err)
 	}
 
 	return grinderID, nil
@@ -429,12 +429,12 @@ func (s *SQLiteDB) getMethodIDByName(ctx context.Context, name string) (int, err
 		`,
 			sql.Named("brewingMethodName", name),
 		).Scan(&methodID); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to retrieve method id from db: %w", err)
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to retrieve method id from db: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return 0, fmt.Errorf("buna: sqlite_db: getMethodIDByName transaction failed: %w", err)
+		return 0, fmt.Errorf("buna: sqlite_db_retrieve: getMethodIDByName transaction failed: %w", err)
 	}
 
 	return methodID, nil

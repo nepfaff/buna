@@ -17,12 +17,12 @@ type SQLiteDB struct {
 func OpenSQLiteDB(ctx context.Context, logger *zap.Logger, dsn string) (*SQLiteDB, error) {
 	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("buna: sqlite_db: failed to open sqlite db: %w", err)
+		return nil, fmt.Errorf("buna: sqlite_db_general: failed to open sqlite db: %w", err)
 	}
 
 	if err := db.PingContext(ctx); err != nil {
 		db.Close()
-		return nil, fmt.Errorf("buna: sqlite_db: sqlite db down: %w", err)
+		return nil, fmt.Errorf("buna: sqlite_db_general: sqlite db down: %w", err)
 	}
 
 	s := &SQLiteDB{
@@ -32,7 +32,7 @@ func OpenSQLiteDB(ctx context.Context, logger *zap.Logger, dsn string) (*SQLiteD
 
 	if err := s.migrate(ctx); err != nil {
 		s.Close()
-		return nil, fmt.Errorf("buna: sqlite_db: failed to migrate SQLite database: %w", err)
+		return nil, fmt.Errorf("buna: sqlite_db_general: failed to migrate SQLite database: %w", err)
 	}
 
 	return s, nil
@@ -53,7 +53,7 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 				UNIQUE(name, roaster)
 			)
 		`); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to create coffees table: %w", err)
+			return fmt.Errorf("buna: sqlite_db_general: failed to create coffees table: %w", err)
 		}
 
 		if _, err := tx.ExecContext(ctx, `
@@ -67,7 +67,7 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 						ON DELETE RESTRICT
 			)
 		`); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to create purchases table: %w", err)
+			return fmt.Errorf("buna: sqlite_db_general: failed to create purchases table: %w", err)
 		}
 
 		if _, err := tx.ExecContext(ctx, `
@@ -77,7 +77,7 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 				UNIQUE(name)
 			)
 		`); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to create brewing_methods table: %w", err)
+			return fmt.Errorf("buna: sqlite_db_general: failed to create brewing_methods table: %w", err)
 		}
 
 		if _, err := tx.ExecContext(ctx, `
@@ -89,7 +89,7 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 				UNIQUE(name)
 			)
 		`); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to create grinders table: %w", err)
+			return fmt.Errorf("buna: sqlite_db_general: failed to create grinders table: %w", err)
 		}
 
 		if _, err := tx.ExecContext(ctx, `
@@ -127,7 +127,7 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 						ON DELETE RESTRICT
 			)
 		`); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to create brewings table: %w", err)
+			return fmt.Errorf("buna: sqlite_db_general: failed to create brewings table: %w", err)
 		}
 
 		if _, err := tx.ExecContext(ctx, `
@@ -140,7 +140,7 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 				UNIQUE(date, notes)
 			)
 		`); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to create cuppings table: %w", err)
+			return fmt.Errorf("buna: sqlite_db_general: failed to create cuppings table: %w", err)
 		}
 
 		if _, err := tx.ExecContext(ctx, `
@@ -159,12 +159,12 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 						ON DELETE RESTRICT
 			)
 		`); err != nil {
-			return fmt.Errorf("buna: sqlite_db: failed to create cupped_coffees table: %w", err)
+			return fmt.Errorf("buna: sqlite_db_general: failed to create cupped_coffees table: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("buna: sqlite_db: transaction failed: %w", err)
+		return fmt.Errorf("buna: sqlite_db_general: transaction failed: %w", err)
 	}
 
 	return nil
@@ -173,13 +173,13 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 func (s *SQLiteDB) TransactContext(ctx context.Context, f func(ctx context.Context, tx *sql.Tx) error) (err error) {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("buna: sqlite_db: failed to begin a transaction: %w", err)
+		return fmt.Errorf("buna: sqlite_db_general: failed to begin a transaction: %w", err)
 	}
 
 	defer func() {
 		if err != nil {
 			if err := tx.Rollback(); err != nil {
-				s.logger.Error("buna: sqlite_db: transaction rollback failed")
+				s.logger.Error("buna: sqlite_db_general: transaction rollback failed")
 			}
 			return
 		}
@@ -192,7 +192,7 @@ func (s *SQLiteDB) TransactContext(ctx context.Context, f func(ctx context.Conte
 
 func (s *SQLiteDB) Close() error {
 	if err := s.db.Close(); err != nil {
-		return fmt.Errorf("buna: sqlite_db: failed to close sqlite db: %w", err)
+		return fmt.Errorf("buna: sqlite_db_general: failed to close sqlite db: %w", err)
 	}
 	return nil
 }

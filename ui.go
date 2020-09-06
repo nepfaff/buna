@@ -263,8 +263,8 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 	case statistics:
 		switch selection.index {
 		case 0:
-			if err := findTotalCountInDB(ctx, db); err != nil {
-				return fmt.Errorf("buna: ui: failed to find total count in db: %w", err)
+			if err := getTotalCountInDB(ctx, db); err != nil {
+				return fmt.Errorf("buna: ui: failed to get total count in db: %w", err)
 			}
 		default:
 			return errors.New("buna: ui: invalid statistics index")

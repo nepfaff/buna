@@ -75,7 +75,7 @@ func (s *SQLiteDB) insertBrewing(ctx context.Context, brewing brewing) error {
 			sql.Named("recommendedCoffeeWeightAdjustmentGrams", brewing.recommendedCoffeeWeightAdjustmentGrams),
 			sql.Named("notes", brewing.notes),
 		); err != nil {
-			return fmt.Errorf("buna: brewing: failed to insert coffee brewing into db: %w", err)
+			return fmt.Errorf("buna: sqlite_db_insert: failed to insert coffee brewing into db: %w", err)
 		}
 
 		if _, err := tx.ExecContext(ctx, `
@@ -89,12 +89,12 @@ func (s *SQLiteDB) insertBrewing(ctx context.Context, brewing brewing) error {
 			sql.Named("coffeeID", coffeeID),
 			sql.Named("date", brewing.date),
 		); err != nil {
-			return fmt.Errorf("buna: brewing: failed to set null values: %w", err)
+			return fmt.Errorf("buna: sqlite_db_insert: failed to set null values: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("buna: brewing: transaction failed: %w", err)
+		return fmt.Errorf("buna: sqlite_db_insert: transaction failed: %w", err)
 	}
 	return nil
 }
@@ -107,12 +107,12 @@ func (s *SQLiteDB) insertBrewingMethod(ctx context.Context, brewingMethod brewin
 		`,
 			sql.Named("name", brewingMethod.name),
 		); err != nil {
-			return fmt.Errorf("buna: brewing_method: failed to insert coffee brewing method into db: %w", err)
+			return fmt.Errorf("buna: sqlite_db_insert: failed to insert coffee brewing method into db: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("buna: brewing_method: transaction failed: %w", err)
+		return fmt.Errorf("buna: sqlite_db_insert: transaction failed: %w", err)
 	}
 	return nil
 }
@@ -130,7 +130,7 @@ func (s *SQLiteDB) insertCoffee(ctx context.Context, coffee coffee) error {
 			sql.Named("method", coffee.method),
 			sql.Named("decaf", coffee.decaf),
 		); err != nil {
-			return fmt.Errorf("buna: coffee: failed to insert coffee into db: %w", err)
+			return fmt.Errorf("buna: sqlite_db_insert: failed to insert coffee into db: %w", err)
 		}
 
 		if _, err := tx.ExecContext(ctx, `
@@ -143,12 +143,12 @@ func (s *SQLiteDB) insertCoffee(ctx context.Context, coffee coffee) error {
 		`,
 			sql.Named("name", coffee.name),
 		); err != nil {
-			return fmt.Errorf("buna: coffee: failed to set null values: %w", err)
+			return fmt.Errorf("buna: sqlite_db_insert: failed to set null values: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("buna: coffee: insertCoffee transaction failed: %w", err)
+		return fmt.Errorf("buna: sqlite_db_insert: insertCoffee transaction failed: %w", err)
 	}
 	return nil
 }
@@ -176,7 +176,7 @@ func (s *SQLiteDB) insertCoffeePurchase(ctx context.Context, coffeePurchase coff
 			sql.Named("boughtDate", coffeePurchase.boughtDate),
 			sql.Named("roastDate", coffeePurchase.roastDate),
 		); err != nil {
-			return fmt.Errorf("buna: coffee_purchase: failed to insert coffee purchase into db: %w", err)
+			return fmt.Errorf("buna: sqlite_db_insert: failed to insert coffee purchase into db: %w", err)
 		}
 
 		if _, err := tx.ExecContext(ctx, `
@@ -187,12 +187,12 @@ func (s *SQLiteDB) insertCoffeePurchase(ctx context.Context, coffeePurchase coff
 			sql.Named("coffeeID", coffeeID),
 			sql.Named("boughtDate", coffeePurchase.boughtDate),
 		); err != nil {
-			return fmt.Errorf("buna: coffee_purchase: failed to set null values: %w", err)
+			return fmt.Errorf("buna: sqlite_db_insert: failed to set null values: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("buna: coffee_purchase: transaction failed: %w", err)
+		return fmt.Errorf("buna: sqlite_db_insert: transaction failed: %w", err)
 	}
 	return nil
 }
@@ -208,18 +208,18 @@ func (s *SQLiteDB) insertCupping(ctx context.Context, cupping cupping) error {
 			sql.Named("cuppingNotes", cupping.notes),
 		)
 		if err != nil {
-			return fmt.Errorf("buna: cupping: failed to insert cupping into db: %w", err)
+			return fmt.Errorf("buna: sqlite_db_insert: failed to insert cupping into db: %w", err)
 		}
 
 		cuppingID, err := res.LastInsertId()
 		if err != nil {
-			return fmt.Errorf("buna: cupping: failed to get cupping id: %w", err)
+			return fmt.Errorf("buna: sqlite_db_insert: failed to get cupping id: %w", err)
 		}
 
 		for _, cuppedCoffee := range cupping.cuppedCoffees {
 			coffeeID, err := s.getCoffeeIDByNameRoaster(ctx, cuppedCoffee.name, cuppedCoffee.roaster)
 			if err != nil {
-				return fmt.Errorf("buna: cupping: failed to retrieve coffee id from db: %w", err)
+				return fmt.Errorf("buna: sqlite_db_insert: failed to retrieve coffee id from db: %w", err)
 			}
 
 			if _, err := tx.ExecContext(ctx, `
@@ -231,13 +231,13 @@ func (s *SQLiteDB) insertCupping(ctx context.Context, cupping cupping) error {
 				sql.Named("coffeeRank", cuppedCoffee.rank),
 				sql.Named("coffeeNotes", cuppedCoffee.notes),
 			); err != nil {
-				return fmt.Errorf("buna: cupping: failed to insert cupped coffee into db: %w", err)
+				return fmt.Errorf("buna: sqlite_db_insert: failed to insert cupped coffee into db: %w", err)
 			}
 		}
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("buna: cupping: insert cupping transaction failed: %w", err)
+		return fmt.Errorf("buna: sqlite_db_insert: insert cupping transaction failed: %w", err)
 	}
 	return nil
 }
@@ -252,7 +252,7 @@ func (s *SQLiteDB) insertGrinder(ctx context.Context, grinder grinder) error {
 			sql.Named("company", grinder.company),
 			sql.Named("maxGrindSetting", grinder.maxGrindSetting),
 		); err != nil {
-			return fmt.Errorf("buna: grinder: failed to insert coffee grinder into db: %w", err)
+			return fmt.Errorf("buna: sqlite_db_insert: failed to insert coffee grinder into db: %w", err)
 		}
 
 		if _, err := tx.ExecContext(ctx, `
@@ -263,12 +263,12 @@ func (s *SQLiteDB) insertGrinder(ctx context.Context, grinder grinder) error {
 		`,
 			sql.Named("name", grinder.name),
 		); err != nil {
-			return fmt.Errorf("buna: grinder: failed to set null values: %w", err)
+			return fmt.Errorf("buna: sqlite_db_insert: failed to set null values: %w", err)
 		}
 
 		return nil
 	}); err != nil {
-		return fmt.Errorf("buna: grinder: transaction failed: %w", err)
+		return fmt.Errorf("buna: sqlite_db_insert: transaction failed: %w", err)
 	}
 	return nil
 }

@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-func findTotalCountInDB(ctx context.Context, db DB) error {
+func getTotalCountInDB(ctx context.Context, db DB) error {
 	options := map[int]string{
 		0: "Total brewings count",
 		1: "Total coffees count",
