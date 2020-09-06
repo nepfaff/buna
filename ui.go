@@ -60,6 +60,7 @@ var (
 		},
 		statistics: map[int]string{
 			0: "Total count",
+			1: "Average brewing rating",
 		},
 		control: map[int]string{
 			0: "Quit",
@@ -265,6 +266,10 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 		case 0:
 			if err := getTotalCountInDB(ctx, db); err != nil {
 				return fmt.Errorf("buna: ui: failed to get total count in db: %w", err)
+			}
+		case 1:
+			if err := getAverageBrewingRating(ctx, db); err != nil {
+				return fmt.Errorf("buna: ui: failed to get average brewing rating: %w", err)
 			}
 		default:
 			return errors.New("buna: ui: invalid statistics index")

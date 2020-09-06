@@ -42,7 +42,7 @@ func addBrewing(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	coffeeName, quit, err := getCoffeeNameWithSuggestions(ctx, db, quitStr)
+	coffeeName, quit, err := getCoffeeNameWithSuggestions(ctx, db, quitStr, false)
 	if err != nil {
 		return fmt.Errorf("buna: brewing: failed to get coffee name: %w", err)
 	}
@@ -60,7 +60,7 @@ func addBrewing(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	brewingMethodName, quit, err := getBrewingMethodNameWithSuggestions(ctx, db, quitStr)
+	brewingMethodName, quit, err := getBrewingMethodNameWithSuggestions(ctx, db, quitStr, false)
 	if err != nil {
 		return fmt.Errorf("buna: brewing: failed to get brewing method name: %w", err)
 	}
@@ -78,7 +78,7 @@ func addBrewing(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	grinderName, quit, err := getCoffeeGrinderNameWithSuggestions(ctx, db, quitStr)
+	grinderName, quit, err := getCoffeeGrinderNameWithSuggestions(ctx, db, quitStr, false)
 	if err != nil {
 		return fmt.Errorf("buna: brewing: failed to get coffee grinder name: %w", err)
 	}
@@ -99,7 +99,7 @@ func addBrewing(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	coffeeGrams, quit, err := getCoffeeWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName)
+	coffeeGrams, quit, err := getCoffeeWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName, false)
 	if err != nil {
 		return fmt.Errorf("buna: brewing: failed to get coffee weight: %w", err)
 	}
@@ -108,7 +108,7 @@ func addBrewing(ctx context.Context, db DB) error {
 		return nil
 	}
 
-	waterGrams, quit, err := getWaterWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName)
+	waterGrams, quit, err := getWaterWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName, false)
 	if err != nil {
 		return fmt.Errorf("buna: brewing: failed to get water weight: %w", err)
 	}
@@ -336,7 +336,7 @@ func displayBrewingSuggestions(ctx context.Context, db DB) error {
 		limit = defaultDisplayAmount
 	}
 
-	brewingMethodName, quit, err := getBrewingMethodNameWithSuggestions(ctx, db, quitStr)
+	brewingMethodName, quit, err := getBrewingMethodNameWithSuggestions(ctx, db, quitStr, false)
 	if err != nil {
 		return fmt.Errorf("buna: brewing: failed to get brewing method name: %w", err)
 	}
@@ -366,7 +366,7 @@ func displayBrewingSuggestions(ctx context.Context, db DB) error {
 		coffeeGrams, waterGrams                int
 	)
 	if showOptionalOptions {
-		coffeeName, quit, err = getCoffeeNameWithSuggestions(ctx, db, quitStr)
+		coffeeName, quit, err = getCoffeeNameWithSuggestions(ctx, db, quitStr, true)
 		if err != nil {
 			return fmt.Errorf("buna: brewing: failed to get coffee name: %w", err)
 		}
@@ -386,7 +386,7 @@ func displayBrewingSuggestions(ctx context.Context, db DB) error {
 			}
 		}
 
-		grinderName, quit, err = getCoffeeGrinderNameWithSuggestions(ctx, db, quitStr)
+		grinderName, quit, err = getCoffeeGrinderNameWithSuggestions(ctx, db, quitStr, true)
 		if err != nil {
 			return fmt.Errorf("buna: brewing: failed to get coffee grinder name: %w", err)
 		}
@@ -395,7 +395,7 @@ func displayBrewingSuggestions(ctx context.Context, db DB) error {
 			return nil
 		}
 
-		coffeeGrams, quit, err = getCoffeeWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName)
+		coffeeGrams, quit, err = getCoffeeWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName, true)
 		if err != nil {
 			return fmt.Errorf("buna: brewing: failed to get coffee weight: %w", err)
 		}
@@ -404,7 +404,7 @@ func displayBrewingSuggestions(ctx context.Context, db DB) error {
 			return nil
 		}
 
-		waterGrams, quit, err = getWaterWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName)
+		waterGrams, quit, err = getWaterWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName, true)
 		if err != nil {
 			return fmt.Errorf("buna: brewing: failed to get water weight: %w", err)
 		}

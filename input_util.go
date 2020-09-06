@@ -327,7 +327,7 @@ func getDateInput(quitStr string, isOptional bool, inputMsg string, suggestions 
 }
 
 // Returns brewingMethodName, didQuit, error
-func getBrewingMethodNameWithSuggestions(ctx context.Context, db DB, quitStr string) (string, bool, error) {
+func getBrewingMethodNameWithSuggestions(ctx context.Context, db DB, quitStr string, isOptional bool) (string, bool, error) {
 	fmt.Print("Enter brewing method name: ")
 
 	brewingMethodSuggestions, err := db.getMostRecentlyUsedBrewingMethodNames(ctx, 5)
@@ -335,7 +335,7 @@ func getBrewingMethodNameWithSuggestions(ctx context.Context, db DB, quitStr str
 		return "", false, fmt.Errorf("buna: input_util: failed to get brewing method suggestions: %w", err)
 	}
 
-	brewingMethodName, quit := validateStrInput(quitStr, false, nil, brewingMethodSuggestions)
+	brewingMethodName, quit := validateStrInput(quitStr, isOptional, nil, brewingMethodSuggestions)
 
 	return brewingMethodName, quit, nil
 }
@@ -348,7 +348,7 @@ func getNotes(quitStr string, optional bool, noteType string) (string, bool) {
 }
 
 // Returns grinderName, didQuit, error
-func getCoffeeGrinderNameWithSuggestions(ctx context.Context, db DB, quitStr string) (string, bool, error) {
+func getCoffeeGrinderNameWithSuggestions(ctx context.Context, db DB, quitStr string, isOptional bool) (string, bool, error) {
 	fmt.Print("Enter coffee grinder name: ")
 
 	grinderSuggestions, err := db.getMostRecentlyUsedCoffeeGrinderNames(ctx, 3)
@@ -356,7 +356,7 @@ func getCoffeeGrinderNameWithSuggestions(ctx context.Context, db DB, quitStr str
 		return "", false, fmt.Errorf("buna: input_util: failed to get coffee grinder suggestions: %w", err)
 	}
 
-	grinderName, quit := validateStrInput(quitStr, false, nil, grinderSuggestions)
+	grinderName, quit := validateStrInput(quitStr, isOptional, nil, grinderSuggestions)
 
 	return grinderName, quit, nil
 }
@@ -371,7 +371,7 @@ func getCoffeeGrindSettingWithSuggestions(quitStr string) (int, bool) {
 }
 
 // Returns coffeeName, didQuit, error
-func getCoffeeNameWithSuggestions(ctx context.Context, db DB, quitStr string) (string, bool, error) {
+func getCoffeeNameWithSuggestions(ctx context.Context, db DB, quitStr string, isOptional bool) (string, bool, error) {
 	fmt.Print("Enter coffee name: ")
 
 	coffeeSuggestions, err := db.getCoffeeNameSuggestions(ctx, 8)
@@ -379,7 +379,7 @@ func getCoffeeNameWithSuggestions(ctx context.Context, db DB, quitStr string) (s
 		return "", false, fmt.Errorf("buna: input_util: failed to get coffee suggestions: %w", err)
 	}
 
-	coffeeName, quit := validateStrInput(quitStr, false, nil, coffeeSuggestions)
+	coffeeName, quit := validateStrInput(quitStr, isOptional, nil, coffeeSuggestions)
 
 	return coffeeName, quit, nil
 }
@@ -424,7 +424,7 @@ func getCoffeeRoasterWithSuggestions(ctx context.Context, db DB, quitStr string,
 }
 
 // Returns coffeeGrams, didQuit, error
-func getCoffeeWeightWithSuggestions(ctx context.Context, db DB, quitStr string, brewingMethodName string, grinderName string) (int, bool, error) {
+func getCoffeeWeightWithSuggestions(ctx context.Context, db DB, quitStr string, brewingMethodName string, grinderName string, isOptional bool) (int, bool, error) {
 	fmt.Print("Enter the coffee weight used in grams: ")
 
 	coffeeWeightSuggestion, err := db.getMostRecentlyUsedCoffeeWeights(ctx, brewingMethodName, grinderName, 5)
@@ -432,7 +432,7 @@ func getCoffeeWeightWithSuggestions(ctx context.Context, db DB, quitStr string, 
 		return 0, false, fmt.Errorf("buna: input_util: failed to get coffee weight suggestions: %w", err)
 	}
 
-	coffeeGrams, quit := validateIntInput(quitStr, false, 5, 100, coffeeWeightSuggestion)
+	coffeeGrams, quit := validateIntInput(quitStr, isOptional, 5, 100, coffeeWeightSuggestion)
 
 	return coffeeGrams, quit, nil
 }
@@ -466,7 +466,7 @@ func getV60FilterTypeWithSuggestions(quitStr string) (string, bool) {
 }
 
 // Returns waterGrams, didQuit, error
-func getWaterWeightWithSuggestions(ctx context.Context, db DB, quitStr string, brewingMethodName string, grinderName string) (int, bool, error) {
+func getWaterWeightWithSuggestions(ctx context.Context, db DB, quitStr string, brewingMethodName string, grinderName string, isOptional bool) (int, bool, error) {
 	fmt.Print("Enter the water weight used in grams: ")
 
 	waterWeightSuggestion, err := db.getMostRecentlyUsedWaterWeights(ctx, brewingMethodName, grinderName, 5)
@@ -474,7 +474,7 @@ func getWaterWeightWithSuggestions(ctx context.Context, db DB, quitStr string, b
 		return 0, false, fmt.Errorf("buna: input_util: failed to get water weight suggestions: %w", err)
 	}
 
-	waterGrams, quit := validateIntInput(quitStr, false, 20, 2000, waterWeightSuggestion)
+	waterGrams, quit := validateIntInput(quitStr, isOptional, 20, 2000, waterWeightSuggestion)
 
 	return waterGrams, quit, nil
 }

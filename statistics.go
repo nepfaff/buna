@@ -6,6 +6,100 @@ import (
 	"fmt"
 )
 
+func getAverageBrewingRating(ctx context.Context, db DB) error {
+	fmt.Println("Getting average brewing rating (Enter # to quit):")
+
+	fmt.Print("Add filters (true or false): ")
+	showOptionalOptions, quit := validateBoolInput(quitStr, true)
+	if quit {
+		fmt.Println(quitMsg)
+		return nil
+	}
+
+	var (
+		brewingMethodName, v60FilterType, coffeeName, coffeeRoaster, grinderName string
+		err                                                                      error
+	)
+	if showOptionalOptions {
+		brewingMethodName, quit, err = getBrewingMethodNameWithSuggestions(ctx, db, quitStr, true)
+		if err != nil {
+			return fmt.Errorf("buna: statistics: failed to get brewing method name: %w", err)
+		}
+		if quit {
+			fmt.Println(quitMsg)
+			return nil
+		}
+
+		if brewingMethodName == "v60" || brewingMethodName == "V60" {
+			v60FilterType, quit = getV60FilterTypeWithSuggestions(quitStr)
+			if quit {
+				fmt.Println(quitMsg)
+				return nil
+			}
+		}
+
+		coffeeName, quit, err = getCoffeeNameWithSuggestions(ctx, db, quitStr, true)
+		if err != nil {
+			return fmt.Errorf("buna: statistics: failed to get coffee name: %w", err)
+		}
+		if quit {
+			fmt.Println(quitMsg)
+			return nil
+		}
+
+		if coffeeName != "" {
+			coffeeRoaster, quit, err = getCoffeeRoasterWithSuggestions(ctx, db, quitStr, coffeeName)
+			if err != nil {
+				return fmt.Errorf("buna: statistics: failed to get coffee roaster: %w", err)
+			}
+			if quit {
+				fmt.Println(quitMsg)
+				return nil
+			}
+		}
+
+		grinderName, quit, err = getCoffeeGrinderNameWithSuggestions(ctx, db, quitStr, true)
+		if err != nil {
+			return fmt.Errorf("buna: statistics: failed to get coffee grinder name: %w", err)
+		}
+		if quit {
+			fmt.Println(quitMsg)
+			return nil
+		}
+	}
+
+	brewingFilter := brewing{
+		date:                                   "",
+		coffeeName:                             coffeeName,
+		coffeeRoaster:                          coffeeRoaster,
+		brewingMethodName:                      brewingMethodName,
+		roastDate:                              "",
+		grinderName:                            grinderName,
+		grindSetting:                           0,
+		totalBrewingTimeSec:                    0,
+		coffeeGrams:                            0,
+		waterGrams:                             0,
+		v60FilterType:                          v60FilterType,
+		rating:                                 0,
+		recommendedGrindSettingAdjustment:      "",
+		recommendedCoffeeWeightAdjustmentGrams: 0,
+		notes:                                  "",
+	}
+
+	averageRating, err := db.getAverageBrewingRating(ctx, brewingFilter)
+	if err != nil {
+		return fmt.Errorf("buna: statistics: failed to get the average brewing rating: %w", err)
+	}
+	if averageRating == 0 {
+		fmt.Println("No brewings exist")
+		return nil
+	}
+
+	fmt.Printf("The average brewing rating is %.1f/10\n", averageRating)
+
+	return nil
+}
+
 func getTotalCountInDB(ctx context.Context, db DB) error {
 	options := map[int]string{
 		0: "Total brewings count",

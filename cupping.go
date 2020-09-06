@@ -63,7 +63,7 @@ func addCupping(ctx context.Context, db DB) error {
 	for i := 0; i < coffeeNumber; i++ {
 		fmt.Println("\nAdding " + strconv.Itoa(i+1) + ". cupped coffee (Enter # to quit):")
 
-		coffeeName, quit, err := getCoffeeNameWithSuggestions(ctx, db, quitStr)
+		coffeeName, quit, err := getCoffeeNameWithSuggestions(ctx, db, quitStr, false)
 		if err != nil {
 			return fmt.Errorf("buna: brewing: failed to get coffee name: %w", err)
 		}

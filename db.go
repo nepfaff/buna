@@ -31,6 +31,7 @@ type DB interface {
 	getRoastersByCoffeeName(ctx context.Context, name string, limit int) ([]string, error)
 
 	// statistics
+	getAverageBrewingRating(ctx context.Context, brewingFilter brewing) (float64, error)
 	getTotalCount(ctx context.Context, entity dbEntity) (int, error)
 
 	// general
