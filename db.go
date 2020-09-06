@@ -30,6 +30,9 @@ type DB interface {
 	getMostRecentlyUsedWaterWeights(ctx context.Context, brewingMethodName string, coffeeGrinderName string, limit int) ([]int, error)
 	getRoastersByCoffeeName(ctx context.Context, name string, limit int) ([]string, error)
 
+	// statistics
+	getTotalCount(ctx context.Context, entity dbEntity) (int, error)
+
 	// general
 	TransactContext(ctx context.Context, f func(ctx context.Context, tx *sql.Tx) error) error
 	Close() error

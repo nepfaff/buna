@@ -25,7 +25,7 @@ const (
 	create category = iota
 	retrieve
 	// edit
-	// statistics
+	statistics
 	control
 )
 
@@ -36,9 +36,10 @@ const (
 
 var (
 	categoryRefs = map[category]string{
-		create:   "A",
-		retrieve: "B",
-		control:  "E",
+		create:     "A",
+		retrieve:   "B",
+		statistics: "C",
+		control:    "E",
 	}
 	options = map[category]map[int]string{
 		create: map[int]string{
@@ -56,6 +57,9 @@ var (
 			3: "Retrieve coffee",
 			4: "Retrieve brewing method",
 			5: "Retrieve grinder",
+		},
+		statistics: map[int]string{
+			0: "Total count",
 		},
 		control: map[int]string{
 			0: "Quit",
@@ -132,6 +136,9 @@ func displayOptions() error {
 			if _, ok := options[cat][i]; ok {
 				rows[i] = append(rows[i], categoryRefs[cat]+strconv.Itoa(i))
 				rows[i] = append(rows[i], options[cat][i])
+			} else {
+				rows[i] = append(rows[i], "")
+				rows[i] = append(rows[i], "")
 			}
 		}
 	}
@@ -230,6 +237,8 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 			if err := addGrinder(ctx, db); err != nil {
 				return fmt.Errorf("buna: ui: failed to create new coffee grinder: %w", err)
 			}
+		default:
+			return errors.New("buna: ui: invalid create index")
 		}
 	case retrieve:
 		switch selection.index {
@@ -248,6 +257,17 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 			}
 		case 4:
 		case 5:
+		default:
+			return errors.New("buna: ui: invalid retrieve index")
+		}
+	case statistics:
+		switch selection.index {
+		case 0:
+			if err := findTotalCountInDB(ctx, db); err != nil {
+				return fmt.Errorf("buna: ui: failed to find total count in db: %w", err)
+			}
+		default:
+			return errors.New("buna: ui: invalid statistics index")
 		}
 	case control:
 		switch selection.index {
@@ -262,6 +282,8 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 			if err := displayOptions(); err != nil {
 				return fmt.Errorf("buna: ui: failed to display main options: %w", err)
 			}
+		default:
+			return errors.New("buna: ui: control index")
 		}
 	default:
 		return errors.New("buna: ui: invalid category")
