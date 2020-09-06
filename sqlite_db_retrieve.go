@@ -323,9 +323,9 @@ func (s *SQLiteDB) getCuppingsByLastAdded(ctx context.Context, limit int) ([]cup
 			return fmt.Errorf("buna: sqlite_db: failed to retrieve real cupping limit from db: %w", err)
 		}
 
-		var realLimitInt int
-		if v := reflect.ValueOf(realLimit); v.Kind() == reflect.Int {
-			realLimitInt = realLimit.(int)
+		var realLimitInt int64
+		if v := reflect.ValueOf(realLimit); v.Kind() == reflect.Int64 {
+			realLimitInt = realLimit.(int64)
 		} else {
 			// realLimit == NULL
 			return nil
