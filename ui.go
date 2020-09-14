@@ -44,11 +44,12 @@ var (
 	options = map[category]map[int]string{
 		create: map[int]string{
 			0: "New brewing",
-			1: "New cupping",
-			2: "New coffee purchase",
-			3: "New coffee",
-			4: "New brewing method",
-			5: "New grinder",
+			1: "New espresso dialing in",
+			2: "New cupping",
+			3: "New coffee purchase",
+			4: "New coffee",
+			5: "New brewing method",
+			6: "New grinder",
 		},
 		retrieve: map[int]string{
 			0: "Retrive brewing",
@@ -219,22 +220,26 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 				return fmt.Errorf("buna: ui: failed to create new coffee brewing: %w", err)
 			}
 		case 1:
+			if err := addEspressoDialingIn(ctx, db); err != nil {
+				return fmt.Errorf("buna: ui: failed to create new espresso dialing in: %w", err)
+			}
+		case 2:
 			if err := addCupping(ctx, db); err != nil {
 				return fmt.Errorf("buna: ui: failed to create new cupping: %w", err)
 			}
-		case 2:
+		case 3:
 			if err := addCoffeePurchase(ctx, db); err != nil {
 				return fmt.Errorf("buna: ui: failed to create new coffee purchase: %w", err)
 			}
-		case 3:
+		case 4:
 			if _, err := addCoffee(ctx, db); err != nil {
 				return fmt.Errorf("buna: ui: failed to create new coffee: %w", err)
 			}
-		case 4:
+		case 5:
 			if err := addBrewingMethod(ctx, db); err != nil {
 				return fmt.Errorf("buna: ui: failed to create new coffee brewing method: %w", err)
 			}
-		case 5:
+		case 6:
 			if err := addGrinder(ctx, db); err != nil {
 				return fmt.Errorf("buna: ui: failed to create new coffee grinder: %w", err)
 			}
