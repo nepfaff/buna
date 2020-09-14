@@ -229,8 +229,8 @@ func (s *SQLiteDB) getMostRecentlyUsedCoffeeGrinderNames(ctx context.Context, li
 
 // limit determines the number of strings in the returned slice.
 // Weight is in grams.
-func (s *SQLiteDB) getMostRecentlyUsedCoffeeWeights(ctx context.Context, brewingMethodName string, coffeeGrinderName string, limit int) ([]int, error) {
-	var weights []int
+func (s *SQLiteDB) getMostRecentlyUsedCoffeeWeights(ctx context.Context, brewingMethodName string, coffeeGrinderName string, limit int) ([]float64, error) {
+	var weights []float64
 	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		rows, err := tx.QueryContext(ctx, `
 			SELECT DISTINCT b.coffee_grams
@@ -253,7 +253,7 @@ func (s *SQLiteDB) getMostRecentlyUsedCoffeeWeights(ctx context.Context, brewing
 		defer rows.Close()
 
 		for rows.Next() {
-			var weight int
+			var weight float64
 			if err := rows.Scan(&weight); err != nil {
 				return fmt.Errorf("buna: input_suggestions: failed to scan row: %w", err)
 			}
@@ -275,8 +275,8 @@ func (s *SQLiteDB) getMostRecentlyUsedCoffeeWeights(ctx context.Context, brewing
 
 // limit determines the number of strings in the returned slice.
 // Weight is in grams.
-func (s *SQLiteDB) getMostRecentlyUsedWaterWeights(ctx context.Context, brewingMethodName string, coffeeGrinderName string, limit int) ([]int, error) {
-	var weights []int
+func (s *SQLiteDB) getMostRecentlyUsedWaterWeights(ctx context.Context, brewingMethodName string, coffeeGrinderName string, limit int) ([]float64, error) {
+	var weights []float64
 	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
 		rows, err := tx.QueryContext(ctx, `
 			SELECT DISTINCT b.water_grams
@@ -299,7 +299,7 @@ func (s *SQLiteDB) getMostRecentlyUsedWaterWeights(ctx context.Context, brewingM
 		defer rows.Close()
 
 		for rows.Next() {
-			var weight int
+			var weight float64
 			if err := rows.Scan(&weight); err != nil {
 				return fmt.Errorf("buna: input_suggestions: failed to scan row: %w", err)
 			}

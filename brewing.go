@@ -22,12 +22,12 @@ type brewing struct {
 	grinderName                            string
 	grindSetting                           int
 	totalBrewingTimeSec                    int
-	coffeeGrams                            int
-	waterGrams                             int
+	coffeeGrams                            float64
+	waterGrams                             float64
 	v60FilterType                          string
 	rating                                 int
 	recommendedGrindSettingAdjustment      string
-	recommendedCoffeeWeightAdjustmentGrams int
+	recommendedCoffeeWeightAdjustmentGrams float64
 	notes                                  string
 }
 
@@ -363,7 +363,7 @@ func displayBrewingSuggestions(ctx context.Context, db DB) error {
 
 	var (
 		coffeeName, coffeeRoaster, grinderName string
-		coffeeGrams, waterGrams                int
+		coffeeGrams, waterGrams                float64
 	)
 	if showOptionalOptions {
 		coffeeName, quit, err = getCoffeeNameWithSuggestions(ctx, db, quitStr, true)

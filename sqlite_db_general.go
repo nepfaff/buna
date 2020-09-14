@@ -104,9 +104,9 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 					CHECK (grind_setting >= 0),
 				total_brewing_time_sec INTEGER NOT NULL
 					CHECK (total_brewing_time_sec > 0),
-				water_grams INTEGER NOT NULL
+				water_grams REAL NOT NULL
 					CHECK (water_grams > 0),
-				coffee_grams INTEGER NOT NULL
+				coffee_grams REAL NOT NULL
 					CHECK (coffee_grams > 0),
 				v60_filter_type TEXT NULL
 					CHECK (v60_filter_type IN ("", "eu", "jp")),
@@ -114,7 +114,7 @@ func (s *SQLiteDB) migrate(ctx context.Context) error {
 					CHECK (rating >= 0 AND rating <= 10),
 				recommended_grind_setting_adjustment TEXT NULL
 					CHECK (recommended_grind_setting_adjustment IN ("", "lower", "higher")),
-				recommended_coffee_weight_adjustment_grams INTEGER NULL,
+				recommended_coffee_weight_adjustment_grams REAL NULL,
 				notes TEXT NULL,
 				FOREIGN KEY (coffee_id)
 					REFERENCES coffees (id)

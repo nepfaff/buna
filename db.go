@@ -26,8 +26,8 @@ type DB interface {
 	getLastCoffeeRoastDate(ctx context.Context, coffeeName string) (date, error)
 	getMostRecentlyUsedBrewingMethodNames(ctx context.Context, limit int) ([]string, error)
 	getMostRecentlyUsedCoffeeGrinderNames(ctx context.Context, limit int) ([]string, error)
-	getMostRecentlyUsedCoffeeWeights(ctx context.Context, brewingMethodName string, coffeeGrinderName string, limit int) ([]int, error)
-	getMostRecentlyUsedWaterWeights(ctx context.Context, brewingMethodName string, coffeeGrinderName string, limit int) ([]int, error)
+	getMostRecentlyUsedCoffeeWeights(ctx context.Context, brewingMethodName string, coffeeGrinderName string, limit int) ([]float64, error)
+	getMostRecentlyUsedWaterWeights(ctx context.Context, brewingMethodName string, coffeeGrinderName string, limit int) ([]float64, error)
 	getRoastersByCoffeeName(ctx context.Context, name string, limit int) ([]string, error)
 
 	// statistics

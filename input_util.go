@@ -157,6 +157,69 @@ func validateIntInput(quitStr string, isOptional bool, min int, max int, suggest
 	return num, false
 }
 
+// Returns a 'true' boolean if quit.
+// Optional floats default to 0.
+// The float bounds are specified using min and max.
+func validateFloatInput(quitStr string, isOptional bool, min float64, max float64, suggestions []float64) (float64, bool) {
+	suggestionNum := len(suggestions)
+	if suggestionNum > 0 {
+		fmt.Println("\nSelect one of the following (integer) or enter 'm' for manual entry:")
+		for i, suggestion := range suggestions {
+			fmt.Printf("%v. %v\n", i+1, suggestion)
+		}
+
+		scanner := bufio.NewScanner(os.Stdin)
+		scanner.Scan()
+		input := scanner.Text()
+
+		if input == quitStr {
+			return 0, true
+		}
+
+		if input == "" && isOptional {
+			return 0, false
+		}
+
+		if input == "m" {
+			fmt.Println("Skipping to manual entry.")
+			fmt.Print("Input: ")
+		} else {
+			num, err := strconv.Atoi(input)
+			if err != nil || num > suggestionNum || num <= 0 {
+				fmt.Println("Not a valid option. Skipping to manual entry")
+				fmt.Print("Input: ")
+			} else {
+				return suggestions[num-1], false
+			}
+		}
+	}
+
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	input := scanner.Text()
+
+	if input == quitStr {
+		return 0, true
+	}
+
+	if input == "" {
+		if isOptional {
+			return 0, false
+		}
+
+		fmt.Print("A value is required. Please try again: ")
+		return validateFloatInput(quitStr, isOptional, min, max, nil)
+	}
+
+	num, err := strconv.ParseFloat(input, 64)
+	if err != nil || num < min || num > max {
+		fmt.Print("Input invalid. Please try again: ")
+		return validateFloatInput(quitStr, isOptional, min, max, nil)
+	}
+
+	return num, false
+}
+
 // Second return boolean is 'true' if quit.
 // Optional booleans default to 'false'.
 func validateBoolInput(quitStr string, isOptional bool) (bool, bool) {
@@ -424,7 +487,7 @@ func getCoffeeRoasterWithSuggestions(ctx context.Context, db DB, quitStr string,
 }
 
 // Returns coffeeGrams, didQuit, error
-func getCoffeeWeightWithSuggestions(ctx context.Context, db DB, quitStr string, brewingMethodName string, grinderName string, isOptional bool) (int, bool, error) {
+func getCoffeeWeightWithSuggestions(ctx context.Context, db DB, quitStr string, brewingMethodName string, grinderName string, isOptional bool) (float64, bool, error) {
 	fmt.Print("Enter the coffee weight used in grams: ")
 
 	coffeeWeightSuggestion, err := db.getMostRecentlyUsedCoffeeWeights(ctx, brewingMethodName, grinderName, 5)
@@ -432,7 +495,7 @@ func getCoffeeWeightWithSuggestions(ctx context.Context, db DB, quitStr string, 
 		return 0, false, fmt.Errorf("buna: input_util: failed to get coffee weight suggestions: %w", err)
 	}
 
-	coffeeGrams, quit := validateIntInput(quitStr, isOptional, 5, 100, coffeeWeightSuggestion)
+	coffeeGrams, quit := validateFloatInput(quitStr, isOptional, 5, 100, coffeeWeightSuggestion)
 
 	return coffeeGrams, quit, nil
 }
@@ -445,10 +508,10 @@ func getRecommendedGrindSettingAdjustmentWithSuggestions(quitStr string) (string
 }
 
 // Returns recommendedCoffeeWeightAdjustmentGrams, didQuit
-func getRecommendedCoffeeWeightAdjustmentGramsWithSuggestions(quitStr string) (int, bool) {
+func getRecommendedCoffeeWeightAdjustmentGramsWithSuggestions(quitStr string) (float64, bool) {
 	fmt.Print("Enter recommended coffee weight adjustment in grams (-20 <= x <= 20): ")
 
-	return validateIntInput(quitStr, true, -20, 20, nil)
+	return validateFloatInput(quitStr, true, -20, 20, nil)
 }
 
 // Returns totalCoffeeBrewingTimeSec, didQuit
@@ -466,7 +529,7 @@ func getV60FilterTypeWithSuggestions(quitStr string) (string, bool) {
 }
 
 // Returns waterGrams, didQuit, error
-func getWaterWeightWithSuggestions(ctx context.Context, db DB, quitStr string, brewingMethodName string, grinderName string, isOptional bool) (int, bool, error) {
+func getWaterWeightWithSuggestions(ctx context.Context, db DB, quitStr string, brewingMethodName string, grinderName string, isOptional bool) (float64, bool, error) {
 	fmt.Print("Enter the water weight used in grams: ")
 
 	waterWeightSuggestion, err := db.getMostRecentlyUsedWaterWeights(ctx, brewingMethodName, grinderName, 5)
@@ -474,7 +537,7 @@ func getWaterWeightWithSuggestions(ctx context.Context, db DB, quitStr string, b
 		return 0, false, fmt.Errorf("buna: input_util: failed to get water weight suggestions: %w", err)
 	}
 
-	waterGrams, quit := validateIntInput(quitStr, isOptional, 20, 2000, waterWeightSuggestion)
+	waterGrams, quit := validateFloatInput(quitStr, isOptional, 20, 2000, waterWeightSuggestion)
 
 	return waterGrams, quit, nil
 }

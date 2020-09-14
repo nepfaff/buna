@@ -87,8 +87,8 @@ func (s *SQLiteDB) getBrewingsByLastAdded(ctx context.Context, limit int) ([]bre
 			} else {
 				brewing.recommendedGrindSettingAdjustment = "None"
 			}
-			if v := reflect.ValueOf(recommendedCoffeeWeightAdjustmentGrams); v.Kind() == reflect.Int64 {
-				brewing.recommendedCoffeeWeightAdjustmentGrams = int(recommendedCoffeeWeightAdjustmentGrams.(int64))
+			if v := reflect.ValueOf(recommendedCoffeeWeightAdjustmentGrams); v.Kind() == reflect.Float64 {
+				brewing.recommendedCoffeeWeightAdjustmentGrams = recommendedCoffeeWeightAdjustmentGrams.(float64)
 			} else {
 				brewing.recommendedCoffeeWeightAdjustmentGrams = 0
 			}
@@ -188,8 +188,8 @@ func (s *SQLiteDB) getBrewingSuggestions(ctx context.Context, limit int, brewing
 			} else {
 				brewing.recommendedGrindSettingAdjustment = "None"
 			}
-			if v := reflect.ValueOf(recommendedCoffeeWeightAdjustmentGrams); v.Kind() == reflect.Int64 {
-				brewing.recommendedCoffeeWeightAdjustmentGrams = int(recommendedCoffeeWeightAdjustmentGrams.(int64))
+			if v := reflect.ValueOf(recommendedCoffeeWeightAdjustmentGrams); v.Kind() == reflect.Float64 {
+				brewing.recommendedCoffeeWeightAdjustmentGrams = recommendedCoffeeWeightAdjustmentGrams.(float64)
 			} else {
 				brewing.recommendedCoffeeWeightAdjustmentGrams = 0
 			}
