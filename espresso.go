@@ -96,10 +96,8 @@ func addEspressoDialingIn(ctx context.Context, db DB) error {
 			return nil
 		}
 
-		waterGrams, quit, err := getWaterWeightWithSuggestions(ctx, db, quitStr, brewingMethodName, grinderName, false)
-		if err != nil {
-			return fmt.Errorf("buna: espresso: failed to get water weight: %w", err)
-		}
+		fmt.Print("Enter the coffee weight used in grams: ")
+		waterGrams, quit := validateFloatInput(quitStr, false, 10, 100, nil)
 		if quit {
 			fmt.Println(quitMsg)
 			return nil
