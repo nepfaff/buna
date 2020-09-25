@@ -18,6 +18,7 @@ type DB interface {
 	getBrewingsOrderByDesc(ctx context.Context, limit int, orderByName string) ([]brewing, error)
 	getBrewingSuggestions(ctx context.Context, limit int, brewingFilter brewing) ([]brewing, error)
 	getCoffeeIDByNameRoaster(ctx context.Context, name string, roaster string) (int, error)
+	getCoffeePurchasesByLastAdded(ctx context.Context, limit int) ([]coffeePurchase, error)
 	getCoffeeNameSuggestions(ctx context.Context, limit int) ([]string, error)
 	getCoffeesByLastAdded(ctx context.Context, limit int) ([]coffee, error)
 	getCuppingsByLastAdded(ctx context.Context, limit int) ([]cupping, error)

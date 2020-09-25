@@ -257,6 +257,9 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 				return fmt.Errorf("buna: ui: failed to retrieve cupping: %w", err)
 			}
 		case 2:
+			if err := retrieveCoffeePurchase(ctx, db); err != nil {
+				return fmt.Errorf("buna: ui: failed to retrieve coffee purchase: %w", err)
+			}
 		case 3:
 			if err := retrieveCoffee(ctx, db); err != nil {
 				return fmt.Errorf("buna: ui: failed to retrieve coffee: %w", err)

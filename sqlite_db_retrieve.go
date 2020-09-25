@@ -245,6 +245,53 @@ func (s *SQLiteDB) getCoffeeIDByNameRoaster(ctx context.Context, name string, ro
 	return coffeeID, nil
 }
 
+func (s *SQLiteDB) getCoffeePurchasesByLastAdded(ctx context.Context, limit int) ([]coffeePurchase, error) {
+	coffeePurchases := make([]coffeePurchase, 0, limit)
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		rows, err := tx.QueryContext(ctx, `
+			SELECT c.name, c.roaster, p.bought_date, p.roast_date
+			FROM purchases AS p
+			INNER JOIN coffees AS c
+				ON p.coffee_id = c.id
+			ORDER BY p.id DESC
+			LIMIT :limit
+		`,
+			sql.Named("limit", limit),
+		)
+		if err != nil {
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to retrieve coffee purchase rows: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var coffeePurchase coffeePurchase
+			var roastDate interface{}
+			if err := rows.Scan(&coffeePurchase.coffeeName, &coffeePurchase.coffeeRoaster, &coffeePurchase.boughtDate, &roastDate); err != nil {
+				return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan row: %w", err)
+			}
+
+			// Deal with possible NULL values
+			if v := reflect.ValueOf(roastDate); v.Kind() == reflect.String {
+				coffeePurchase.roastDate = roastDate.(string)
+			} else {
+				coffeePurchase.roastDate = "Unknown"
+			}
+
+			coffeePurchases = append(coffeePurchases, coffeePurchase)
+		}
+
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan last row: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("buna: sqlite_db_retrieve: getCoffeePurchasesByLastAdded transaction failed: %w", err)
+	}
+
+	return coffeePurchases, nil
+}
+
 func (s *SQLiteDB) getCoffeesByLastAdded(ctx context.Context, limit int) ([]coffee, error) {
 	coffees := make([]coffee, 0, limit)
 	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
