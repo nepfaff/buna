@@ -129,7 +129,7 @@ func runRetrieveCoffeeSelection(ctx context.Context, selection int, db DB) error
 // Promts user for an optional limit.
 func displayCoffeesByLastAdded(ctx context.Context, db DB) error {
 	const defaultDisplayAmount = 15
-	const maxDisplayAmount = 50
+	const maxDisplayAmount = 60
 
 	fmt.Println("Displaying coffees by last added (Enter # to quit):")
 	fmt.Print("Enter a limit for the number of coffees to display: ")
@@ -150,14 +150,26 @@ func displayCoffeesByLastAdded(ctx context.Context, db DB) error {
 
 	t := table.NewWriter()
 
-	t.AppendHeader(table.Row{"Name", "Roaster", "Region/Origin", "Variety", "Processing method", "Decaf"})
+	t.AppendHeader(table.Row{
+		"Name",
+		"Roaster",
+		"Region/Origin",
+		"Variety",
+		"Processing method",
+		"Decaf",
+	})
 
-	rows := make([]table.Row, len(coffees))
-	for i, coffee := range coffees {
-		rows[i] = table.Row{coffee.name, coffee.roaster, coffee.region, coffee.variety, coffee.method, coffee.decaf}
+	for _, coffee := range coffees {
+		t.AppendRow(table.Row{
+			coffee.name,
+			coffee.roaster,
+			coffee.region,
+			coffee.variety,
+			coffee.method,
+			coffee.decaf,
+		})
+		t.AppendSeparator()
 	}
-
-	t.AppendRows(rows)
 
 	terminalWidth, _, err := terminal.GetSize(int(os.Stdin.Fd()))
 	if err != nil {
