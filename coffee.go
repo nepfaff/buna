@@ -83,14 +83,14 @@ func addCoffee(ctx context.Context, db DB) (coffee, error) {
 
 func retrieveCoffee(ctx context.Context, db DB) error {
 	options := map[int]string{
-		0: "Retrieve coffee by name",
-		1: "Retrieve coffees ordered by last added",
-		2: "Retrieve coffees ordered alphabetically",
-		3: "Retrieve coffees by origin",
-		4: "Retrieve coffees by roaster",
-		5: "Retrieve coffees by processing method",
-		6: "Retrieve decaf coffees ordered by last added",
-		7: "Retrieve decaf coffees ordered alphabetically",
+		0: "Retrieve coffees ordered by last added",
+		// 1: "Retrieve coffee by name",
+		// 2: "Retrieve coffees ordered alphabetically",
+		// 3: "Retrieve coffees by origin",
+		// 4: "Retrieve coffees by roaster",
+		// 5: "Retrieve coffees by processing method",
+		// 6: "Retrieve decaf coffees ordered by last added",
+		// 7: "Retrieve decaf coffees ordered alphabetically",
 	}
 
 	fmt.Println("Retrieving coffee (Enter # to quit):")
@@ -117,16 +117,9 @@ func retrieveCoffee(ctx context.Context, db DB) error {
 func runRetrieveCoffeeSelection(ctx context.Context, selection int, db DB) error {
 	switch selection {
 	case 0:
-	case 1:
 		if err := displayCoffeesByLastAdded(ctx, db); err != nil {
 			return fmt.Errorf("buna: coffee: failed to display coffees by last added: %w", err)
 		}
-	case 2:
-	case 3:
-	case 4:
-	case 5:
-	case 6:
-	case 7:
 	default:
 		return errors.New("buna: coffee: invalid retrieve selection")
 	}
