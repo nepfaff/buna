@@ -7,6 +7,43 @@ import (
 	"reflect"
 )
 
+func (s *SQLiteDB) getBrewingMethodsByLastAdded(ctx context.Context, limit int) ([]brewingMethod, error) {
+	brewingMethods := make([]brewingMethod, 0, limit)
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		rows, err := tx.QueryContext(ctx, `
+			SELECT name
+			FROM brewing_methods
+			ORDER BY id DESC
+			LIMIT :limit
+		`,
+			sql.Named("limit", limit),
+		)
+		if err != nil {
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to retrieve brewing method rows: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var brewingMethod brewingMethod
+			if err := rows.Scan(&brewingMethod.name); err != nil {
+				return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan row: %w", err)
+			}
+
+			brewingMethods = append(brewingMethods, brewingMethod)
+		}
+
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan last row: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("buna: sqlite_db_retrieve: getBrewingMethodsLastAdded transaction failed: %w", err)
+	}
+
+	return brewingMethods, nil
+}
+
 func (s *SQLiteDB) getBrewingsOrderByDesc(ctx context.Context, limit int, orderByName string) ([]brewing, error) {
 	brewings := make([]brewing, 0, limit)
 	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
