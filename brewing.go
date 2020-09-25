@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 	"time"
 
@@ -212,48 +211,33 @@ func runRetrieveBrewingSelection(ctx context.Context, selection int, db DB) erro
 			return fmt.Errorf("buna: brewing: failed to display brewings by last added: %w", err)
 		}
 	case 2:
-	case 3:
-	case 4:
-	case 5:
-	case 6:
-	case 7:
+		if err := displayBrewingsByRating(ctx, db); err != nil {
+			return fmt.Errorf("buna: brewing: failed to display brewings by rating: %w", err)
+		}
 	default:
 		return errors.New("buna: brewing: invalid retrieve selection")
 	}
 	return nil
 }
 
-// Promts user for an optional limit and whether the brewing notes should be included.
-func displayBrewingsByLastAdded(ctx context.Context, db DB) error {
-	const defaultDisplayAmount = 15
-	const maxDisplayAmount = 50
+func displayBrewingsBy(ctx context.Context, db DB, orderByName string) error {
+	const defaultDisplayAmount = 5
+	const maxDisplayAmount = 30
+	const maxNoteFieldWidth = 50
 
-	fmt.Println("Displaying brewings by last added (Enter # to quit):")
 	fmt.Print("Enter a limit for the number of brewings to display: ")
 	limit, quit := validateIntInput(quitStr, true, 1, maxDisplayAmount, []int{})
 	if quit {
 		fmt.Println(quitMsg)
 		return nil
 	}
-
-	fmt.Print("Show brewing notes (true or false): ")
-	showNotes, quit := validateBoolInput(quitStr, true)
-	if quit {
-		fmt.Println(quitMsg)
-		return nil
-	}
-
 	if limit == 0 {
-		if showNotes {
-			limit = defaultDisplayAmount / 3
-		} else {
-			limit = defaultDisplayAmount
-		}
+		limit = defaultDisplayAmount
 	}
 
-	brewings, err := db.getBrewingsByLastAdded(ctx, limit)
+	brewings, err := db.getBrewingsOrderByDesc(ctx, limit, orderByName)
 	if err != nil {
-		return fmt.Errorf("buna: brewing: failed to get coffees by last added: %w", err)
+		return fmt.Errorf("buna: brewing: failed to get brewings order by desc: %w", err)
 	}
 
 	t := table.NewWriter()
@@ -268,20 +252,26 @@ func displayBrewingsByLastAdded(ctx context.Context, db DB) error {
 		"Water\nWeight\n(g)",
 		"Rating",
 		"Recommended\nGrind\nAdjustment",
-		"Recommended\nCoffee\nAdjustment (g)",
+		"Recommended\nCoffee\nAdjustment\n(g)",
 		"V60\nFilter\nType",
+		"Notes",
 		"Grinder",
 		"Coffee\nRoaster",
 		"Roast Date",
 	})
 
 	for _, brewing := range brewings {
-		grinder := strings.ReplaceAll(brewing.grinderName, "(", "\n(")
+		coffeeName := strings.ReplaceAll(brewing.coffeeName, " ", "\n")
+		brewingMethodName := strings.ReplaceAll(brewing.brewingMethodName, " ", "\n")
+		notes := splitTextIntoField(brewing.notes, maxNoteFieldWidth)
+		grinderName := strings.ReplaceAll(brewing.grinderName, " ", "\n")
+		grinderName = strings.ReplaceAll(grinderName, "(", "\n(")
+		coffeeRoaster := strings.ReplaceAll(brewing.coffeeRoaster, " ", "\n")
 
 		row := table.Row{
 			brewing.date,
-			brewing.coffeeName,
-			brewing.brewingMethodName,
+			coffeeName,
+			brewingMethodName,
 			brewing.grindSetting,
 			brewing.totalBrewingTimeSec,
 			brewing.coffeeGrams,
@@ -290,20 +280,13 @@ func displayBrewingsByLastAdded(ctx context.Context, db DB) error {
 			brewing.recommendedGrindSettingAdjustment,
 			brewing.recommendedCoffeeWeightAdjustmentGrams,
 			brewing.v60FilterType,
-			grinder,
-			brewing.coffeeRoaster,
+			notes,
+			grinderName,
+			coffeeRoaster,
 			brewing.roastDate,
 		}
 
 		t.AppendRow(row)
-
-		if showNotes {
-			re := regexp.MustCompile(`([.?!:;]) ([A-Z])`)
-			notes := "\n" + string(re.ReplaceAll([]byte(brewing.notes), []byte("${1}\n${2}")))
-
-			t.AppendRow(table.Row{"\nNotes:", notes})
-		}
-
 		t.AppendSeparator()
 	}
 
@@ -315,6 +298,26 @@ func displayBrewingsByLastAdded(ctx context.Context, db DB) error {
 
 	t.SetOutputMirror(os.Stdout)
 	t.Render()
+
+	return nil
+}
+
+func displayBrewingsByLastAdded(ctx context.Context, db DB) error {
+	fmt.Println("Displaying brewings by last added (Enter # to quit):")
+
+	if err := displayBrewingsBy(ctx, db, "id"); err != nil {
+		return fmt.Errorf("buna: brewing: failed to get brewings by last added: %w", err)
+	}
+
+	return nil
+}
+
+func displayBrewingsByRating(ctx context.Context, db DB) error {
+	fmt.Println("Displaying brewings by rating (Enter # to quit):")
+
+	if err := displayBrewingsBy(ctx, db, "rating"); err != nil {
+		return fmt.Errorf("buna: brewing: failed to get brewings by rating: %w", err)
+	}
 
 	return nil
 }
@@ -445,7 +448,7 @@ func displayBrewingSuggestions(ctx context.Context, db DB) error {
 		"Coffee\nWeight\n(g)",
 		"Water\nWeight\n(g)",
 		"Recommended\nGrind\nAdjustment",
-		"Recommended\nCoffee\nAdjustment (g)",
+		"Recommended\nCoffee\nAdjustment\n(g)",
 		"Notes",
 		"Rating",
 		"V60\nFilter\nType",

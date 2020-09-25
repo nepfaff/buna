@@ -7,10 +7,10 @@ import (
 	"reflect"
 )
 
-func (s *SQLiteDB) getBrewingsByLastAdded(ctx context.Context, limit int) ([]brewing, error) {
+func (s *SQLiteDB) getBrewingsOrderByDesc(ctx context.Context, limit int, orderByName string) ([]brewing, error) {
 	brewings := make([]brewing, 0, limit)
 	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
-		rows, err := tx.QueryContext(ctx, `
+		rows, err := tx.QueryContext(ctx, fmt.Sprintf(`
 			SELECT 	b.date,
 					c.name,
 					c.roaster,
@@ -33,9 +33,9 @@ func (s *SQLiteDB) getBrewingsByLastAdded(ctx context.Context, limit int) ([]bre
 				ON m.id = b.method_id
 			INNER JOIN grinders AS g
 				ON g.id = b.grinder_id
-			ORDER BY b.id DESC
+			ORDER BY b.%s DESC, b.id DESC
 			LIMIT :limit
-		`,
+		`, orderByName),
 			sql.Named("limit", limit),
 		)
 		if err != nil {
