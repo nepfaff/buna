@@ -503,6 +503,56 @@ func (s *SQLiteDB) getGrinderIDByName(ctx context.Context, name string) (int, er
 	return grinderID, nil
 }
 
+func (s *SQLiteDB) getGrindersByLastAdded(ctx context.Context, limit int) ([]grinder, error) {
+	grinders := make([]grinder, 0, limit)
+	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {
+		rows, err := tx.QueryContext(ctx, `
+			SELECT name, company, max_grind_setting
+			FROM grinders
+			ORDER BY id DESC
+			LIMIT :limit
+		`,
+			sql.Named("limit", limit),
+		)
+		if err != nil {
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to retrieve brewing method rows: %w", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var grinder grinder
+			var company, maxGrindSetting interface{}
+			if err := rows.Scan(&grinder.name, &company, &maxGrindSetting); err != nil {
+				return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan row: %w", err)
+			}
+
+			// Deal with possible NULL values
+			if v := reflect.ValueOf(company); v.Kind() == reflect.String {
+				grinder.company = company.(string)
+			} else {
+				grinder.company = "Unknown"
+			}
+			if v := reflect.ValueOf(maxGrindSetting); v.Kind() == reflect.Int64 {
+				grinder.maxGrindSetting = int(maxGrindSetting.(int64))
+			} else {
+				grinder.maxGrindSetting = -1
+			}
+
+			grinders = append(grinders, grinder)
+		}
+
+		if err := rows.Err(); err != nil {
+			return fmt.Errorf("buna: sqlite_db_retrieve: failed to scan last row: %w", err)
+		}
+
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("buna: sqlite_db_retrieve: getGrindersByLastAdded transaction failed: %w", err)
+	}
+
+	return grinders, nil
+}
+
 func (s *SQLiteDB) getMethodIDByName(ctx context.Context, name string) (int, error) {
 	var methodID int
 	if err := s.TransactContext(ctx, func(ctx context.Context, tx *sql.Tx) error {

@@ -269,6 +269,9 @@ func runSelection(ctx context.Context, selection selection, db DB) error {
 				return fmt.Errorf("buna: ui: failed to retrieve brewing method: %w", err)
 			}
 		case 5:
+			if err := retrieveGrinder(ctx, db); err != nil {
+				return fmt.Errorf("buna: ui: failed to retrieve grinder: %w", err)
+			}
 		default:
 			return errors.New("buna: ui: invalid retrieve index")
 		}
